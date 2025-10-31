@@ -1,12 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:walnut_home_page/fitness_data_screen.dart';
-import 'package:walnut_home_page/planscreen/models/adjustment_item.dart';
-import 'package:walnut_home_page/planscreen/models/expert_team.dart';
-import 'package:walnut_home_page/planscreen/models/insight_item.dart';
-import 'package:walnut_home_page/planscreen/models/protocol_data.dart';
-import 'package:walnut_home_page/planscreen/models/protocol_overview.dart';
-import 'package:walnut_home_page/planscreen/models/timeline_day.dart';
-import 'package:walnut_home_page/planscreen/plan_details_screen.dart';
 import 'package:walnut_home_page/planscreen/plans_screen.dart';
 import 'package:walnut_home_page/weeklyplanscreens/weekly_plan.dart';
 
@@ -915,6 +908,53 @@ class _ChatScreenState extends State<ChatScreen> {
     ),
   ];
 
+  bool _isTyping = false;
+  String _streamingText = "";
+
+  // Simulates ChatGPT-like streaming text response
+  Future<void> _simulateAIResponse(String userMessage) async {
+    setState(() => _isTyping = true);
+
+    // Add "Thinking..." placeholder message
+    _messages.add(
+      ChatMessage(
+        text: "Thinking...",
+        isUser: false,
+        timestamp: DateTime.now(),
+      ),
+    );
+    setState(() {});
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    // Dummy AI response for now (you can later replace with real backend text stream)
+    const responseText =
+        "Based on your recent activity, I adjusted your plan to optimize recovery and maintain consistency. Would you like to view today’s updated plan?";
+
+    // Replace "Thinking..." with streaming text
+    _messages.removeLast();
+    _streamingText = "";
+    _messages.add(
+      ChatMessage(text: "", isUser: false, timestamp: DateTime.now()),
+    );
+    setState(() {});
+
+    // Stream text like ChatGPT
+    for (int i = 0; i < responseText.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 30));
+      _streamingText = responseText.substring(0, i + 1);
+      setState(() {
+        _messages[_messages.length - 1] = ChatMessage(
+          text: _streamingText,
+          isUser: false,
+          timestamp: DateTime.now(),
+        );
+      });
+    }
+
+    setState(() => _isTyping = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -967,80 +1007,140 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
+          if (_isTyping)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: TypingIndicator(),
             ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.attach_file),
-                  color: const Color(0xFF00BFA5),
-                  onPressed: () {},
+          _buildInputArea(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputArea() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.attach_file),
+            color: const Color(0xFF00BFA5),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.mic),
+            color: const Color(0xFF00BFA5),
+            onPressed: () {},
+          ),
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: InputDecoration(
+                hintText: 'Ask Amara anything...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
                 ),
-                IconButton(
-                  icon: const Icon(Icons.mic),
-                  color: const Color(0xFF00BFA5),
-                  onPressed: () {},
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
                 ),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Ask Amara anything...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF00BFA5), Color(0xFF00897B)],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.send),
+              color: Colors.white,
+              onPressed: () {
+                if (_messageController.text.isNotEmpty && !_isTyping) {
+                  final userMessage = _messageController.text.trim();
+                  setState(() {
+                    _messages.add(
+                      ChatMessage(
+                        text: userMessage,
+                        isUser: true,
+                        timestamp: DateTime.now(),
                       ),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF00BFA5), Color(0xFF00897B)],
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.send),
-                    color: Colors.white,
-                    onPressed: () {
-                      if (_messageController.text.isNotEmpty) {
-                        setState(() {
-                          _messages.add(
-                            ChatMessage(
-                              text: _messageController.text,
-                              isUser: true,
-                              timestamp: DateTime.now(),
-                            ),
-                          );
-                          _messageController.clear();
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ],
+                    );
+                    _messageController.clear();
+                  });
+                  _simulateAIResponse(userMessage);
+                }
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ============= TYPING INDICATOR (3 dots) =============
+class TypingIndicator extends StatefulWidget {
+  const TypingIndicator({Key? key}) : super(key: key);
+
+  @override
+  State<TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<TypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (i) {
+        return FadeTransition(
+          opacity: Tween(begin: 0.2, end: 1.0).animate(
+            CurvedAnimation(
+              parent: _controller,
+              curve: Interval(i * 0.2, 1.0, curve: Curves.easeInOut),
+            ),
+          ),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 3),
+            child: CircleAvatar(radius: 3, backgroundColor: Colors.teal),
+          ),
+        );
+      }),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Global Health instance
 final health = Health();
@@ -17,6 +18,7 @@ class FitnessDataScreen extends StatefulWidget {
 class _FitnessDataScreenState extends State<FitnessDataScreen> {
   bool _isLoading = false;
   bool _isAuthorized = false;
+  HealthConnectSdkStatus? _healthConnectStatus;
 
   // Today's fitness data variables
   int _steps = 0;
@@ -38,16 +40,30 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
     'bloodOxygen': [],
   };
 
-  // Data types to fetch
-  final types = [
-    HealthDataType.STEPS,
-    HealthDataType.HEART_RATE,
-    HealthDataType.ACTIVE_ENERGY_BURNED,
-    HealthDataType.DISTANCE_WALKING_RUNNING,
-    HealthDataType.WORKOUT,
-    HealthDataType.SLEEP_ASLEEP,
-    HealthDataType.BLOOD_OXYGEN,
-  ];
+  // Data types to fetch - platform specific
+  List<HealthDataType> get types {
+    if (Platform.isAndroid) {
+      return [
+        HealthDataType.STEPS,
+        HealthDataType.HEART_RATE,
+        HealthDataType.ACTIVE_ENERGY_BURNED,
+        HealthDataType.DISTANCE_DELTA, // Android uses DISTANCE_DELTA
+        HealthDataType.WORKOUT,
+        HealthDataType.SLEEP_ASLEEP,
+        HealthDataType.BLOOD_OXYGEN,
+      ];
+    } else {
+      return [
+        HealthDataType.STEPS,
+        HealthDataType.HEART_RATE,
+        HealthDataType.ACTIVE_ENERGY_BURNED,
+        HealthDataType.DISTANCE_WALKING_RUNNING, // iOS specific
+        HealthDataType.WORKOUT,
+        HealthDataType.SLEEP_ASLEEP,
+        HealthDataType.BLOOD_OXYGEN,
+      ];
+    }
+  }
 
   // Permissions for each type
   List<HealthDataAccess> get permissions => types
@@ -67,10 +83,72 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
   void initState() {
     super.initState();
     health.configure();
+    _checkHealthConnectStatus();
+  }
+
+  /// Check Health Connect status on Android
+  Future<void> _checkHealthConnectStatus() async {
     if (Platform.isAndroid) {
-      health.getHealthConnectSdkStatus();
+      setState(() => _isLoading = true);
+
+      try {
+        final status = await health.getHealthConnectSdkStatus();
+        setState(() {
+          _healthConnectStatus = status;
+        });
+
+        debugPrint("Health Connect Status: $status");
+
+        // If Health Connect is available, proceed with authorization
+        if (status == HealthConnectSdkStatus.sdkAvailable) {
+          await _authorize();
+        }
+      } catch (error) {
+        debugPrint("Error checking Health Connect status: $error");
+      }
+
+      setState(() => _isLoading = false);
+    } else {
+      // iOS - proceed directly to authorization
+      await _authorize();
     }
-    _authorize();
+  }
+
+  /// Install Health Connect
+  Future<void> _installHealthConnect() async {
+    try {
+      await health.installHealthConnect();
+      // Recheck status after installation attempt
+      await Future.delayed(const Duration(seconds: 2));
+      await _checkHealthConnectStatus();
+    } catch (error) {
+      debugPrint("Error installing Health Connect: $error");
+      // Fallback: Open Play Store directly
+      _openPlayStore();
+    }
+  }
+
+  /// Open Play Store to Health Connect page
+  Future<void> _openPlayStore() async {
+    final uri = Uri.parse(
+      'https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata',
+    );
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (error) {
+      debugPrint("Error opening Play Store: $error");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please install Health Connect from Play Store'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   /// Authorize and request permissions
@@ -156,6 +234,7 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
 
         switch (data.type) {
           case HealthDataType.DISTANCE_WALKING_RUNNING:
+          case HealthDataType.DISTANCE_DELTA:
             if (numericValue != null) totalDistance += numericValue;
             break;
           case HealthDataType.ACTIVE_ENERGY_BURNED:
@@ -199,7 +278,6 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
   Future<void> _fetchWeeklyData() async {
     try {
       final now = DateTime.now();
-      final sevenDaysAgo = now.subtract(const Duration(days: 7));
 
       Map<String, List<FlSpot>> weeklyData = {
         'steps': [],
@@ -254,6 +332,7 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
               if (numericValue != null) dayCalories += numericValue;
               break;
             case HealthDataType.DISTANCE_WALKING_RUNNING:
+            case HealthDataType.DISTANCE_DELTA:
               if (numericValue != null) dayDistance += numericValue;
               break;
             case HealthDataType.HEART_RATE:
@@ -293,6 +372,83 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
     }
   }
 
+  /// Build Health Connect installation prompt for Android
+  Widget _buildHealthConnectPrompt() {
+    String message;
+    String buttonText;
+    IconData icon;
+
+    switch (_healthConnectStatus) {
+      case HealthConnectSdkStatus.sdkUnavailable:
+        message = 'Health Connect is not available on your device';
+        buttonText = 'Learn More';
+        icon = Icons.info_outline;
+        break;
+      case HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired:
+        message = 'Please update Google Play Services to use Health Connect';
+        buttonText = 'Update';
+        icon = Icons.system_update;
+        break;
+      default:
+        message = 'Health Connect is required to access fitness data';
+        buttonText = 'Install Health Connect';
+        icon = Icons.download;
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.teal.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 64, color: Colors.teal),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Health Connect Required',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _installHealthConnect,
+              icon: const Icon(Icons.download),
+              label: Text(buttonText),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: _checkHealthConnectStatus,
+              child: const Text('I\'ve already installed it'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -303,14 +459,21 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              _fetchFitnessData();
-              _fetchWeeklyData();
+              if (Platform.isAndroid) {
+                _checkHealthConnectStatus();
+              } else {
+                _fetchFitnessData();
+                _fetchWeeklyData();
+              }
             },
           ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : Platform.isAndroid &&
+                _healthConnectStatus != HealthConnectSdkStatus.sdkAvailable
+          ? _buildHealthConnectPrompt()
           : !_isAuthorized
           ? Center(
               child: Column(
@@ -423,6 +586,7 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
                         childAspectRatio: 1.1,
                         children: [
                           _buildFitnessCard(
+                            picpath: "",
                             icon: Icons.directions_walk,
                             title: 'Steps',
                             value: _steps.toString(),
@@ -430,6 +594,7 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
                             color: Colors.blue,
                           ),
                           _buildFitnessCard(
+                            picpath: "",
                             icon: Icons.favorite,
                             title: 'Heart Rate',
                             value: _heartRate > 0
@@ -439,6 +604,7 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
                             color: Colors.red,
                           ),
                           _buildFitnessCard(
+                            picpath: "",
                             icon: Icons.local_fire_department,
                             title: 'Calories',
                             value: _calories.toStringAsFixed(0),
@@ -446,6 +612,7 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
                             color: Colors.orange,
                           ),
                           _buildFitnessCard(
+                            picpath: "",
                             icon: Icons.route,
                             title: 'Distance',
                             value: _distance.toStringAsFixed(2),
@@ -453,6 +620,7 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
                             color: Colors.green,
                           ),
                           _buildFitnessCard(
+                            picpath: "",
                             icon: Icons.nightlight_round,
                             title: 'Sleep',
                             value: (_sleepMinutes ~/ 60).toString(),
@@ -465,8 +633,10 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
                             value: _workouts.toString(),
                             unit: 'sessions',
                             color: Colors.purple,
+                            picpath: "",
                           ),
                           _buildFitnessCard(
+                            picpath: "",
                             icon: Icons.air,
                             title: 'VO2 Max',
                             value: _vo2Max > 0
@@ -476,6 +646,7 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
                             color: Colors.cyan,
                           ),
                           _buildFitnessCard(
+                            picpath: "",
                             icon: Icons.water_drop,
                             title: 'Blood O₂',
                             value: _bloodOxygen > 0
@@ -507,7 +678,7 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
       width: 280,
       margin: const EdgeInsets.symmetric(horizontal: 8),
       child: Card(
-        elevation: 4,
+        // elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -606,77 +777,103 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
     required String value,
     required String unit,
     required Color color,
+    required String picpath,
   }) {
     return Card(
-      elevation: 6,
+      // shadowColor: color.withValues(alpha: 0.4),
+      // elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.white, color.withOpacity(0.08)],
-          ),
+          // gradient: LinearGradient(
+          //   begin: Alignment.topLeft,
+          //   end: Alignment.bottomRight,
+          //   // colors: [Colors.white, color.withOpacity(0.08)],
+          // ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Icon and Title
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.2),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            // Value and Unit
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Icon(icon, color: color, size: 24),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        value,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      unit,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 0, 0),
+              child: Text(
+                unit,
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+            ),
+            // Value and Unit
+
+            // Row(
+            //   crossAxisAlignment: CrossAxisAlignment.baseline,
+            //   textBaseline: TextBaseline.alphabetic,
+            //   children: [
+            //     Flexible(
+            //       child: Text(
+            //         value,
+            //         style: const TextStyle(
+            //           fontSize: 24,
+            //           fontWeight: FontWeight.w900,
+            //           color: Colors.black,
+            //         ),
+            //         overflow: TextOverflow.ellipsis,
+            //       ),
+            //     ),
+            //     const SizedBox(width: 4),
+            //     Text(
+            //       unit,
+            //       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            //     ),
+            //   ],
+            // ),
           ],
         ),
       ),

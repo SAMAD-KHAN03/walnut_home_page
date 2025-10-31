@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 class HabitTimelineScreen extends StatefulWidget {
   const HabitTimelineScreen({super.key});
@@ -221,29 +222,29 @@ class _HabitTimelineScreenState extends State<HabitTimelineScreen> {
                 alignment: Alignment.center,
                 children: [
                   // Base Line
-                  Container(
-                    height: 4,
-                    width: double.infinity,
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
+                  // Container(
+                  //   height: 4,
+                  //   width: double.infinity,
+                  //   margin: const EdgeInsets.symmetric(horizontal: 8),
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.grey[300],
+                  //     borderRadius: BorderRadius.circular(4),
+                  //   ),
+                  // ),
                   // Animated progress line
-                  FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: progress,
-                    child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Colors.teal, Colors.greenAccent],
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
+                  // FractionallySizedBox(
+                  //   alignment: Alignment.centerLeft,
+                  //   widthFactor: progress,
+                  //   child: Container(
+                  //     height: 4,
+                  //     decoration: BoxDecoration(
+                  //       gradient: const LinearGradient(
+                  //         colors: [Colors.teal, Colors.greenAccent],
+                  //       ),
+                  //       borderRadius: BorderRadius.circular(4),
+                  //     ),
+                  //   ),
+                  // ),
                   // Circular nodes
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -327,12 +328,26 @@ class _HabitTimelineScreenState extends State<HabitTimelineScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(4),
-                    color: Colors.teal,
-                    backgroundColor: Colors.grey[300],
+                  Container(
+                    width: 200,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Container(
+                          width: constraints.maxWidth * progress,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Colors.teal, Colors.greenAccent],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
@@ -350,7 +365,13 @@ class _HabitTimelineScreenState extends State<HabitTimelineScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text("Mark Next Day Complete"),
+                    child: const Text(
+                      "Mark Next Day Complete",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
