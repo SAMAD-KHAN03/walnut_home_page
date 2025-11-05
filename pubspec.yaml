@@ -39,6 +39,10 @@ dependencies:
   permission_handler: ^12.0.1
   fl_chart: ^1.1.1
   url_launcher: ^6.3.2
+  searchfield: ^1.4.0
+  provider: ^6.1.5+1
+  flutter_provider: ^2.1.0
+  riverpod: ^3.0.3
 
 dev_dependencies:
   flutter_test:

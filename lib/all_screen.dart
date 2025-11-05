@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:walnut_home_page/fitness_data_screen.dart';
+import 'package:walnut_home_page/healt_expert_screens/health_expert.dart';
 import 'package:walnut_home_page/planscreen/plans_screen.dart';
 import 'package:walnut_home_page/weeklyplanscreens/weekly_plan.dart';
 
@@ -39,9 +40,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    PlansScreen(),
+    const PlansScreen(),
     const FitnessDataScreen(),
     const ProgressScreen(),
+    const HealthExpert_Screen(),
   ];
 
   @override
@@ -65,8 +67,12 @@ class _HomeDashboardState extends State<HomeDashboard> {
             label: 'HealtStats',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.insights),
+            icon: Icon(Icons.bar_chart),
             label: 'Progress',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_hospital),
+            label: 'Health Experts',
           ),
         ],
       ),
@@ -928,9 +934,10 @@ class _ChatScreenState extends State<ChatScreen> {
     await Future.delayed(const Duration(seconds: 1));
 
     // Dummy AI response for now (you can later replace with real backend text stream)
-    const responseText =
-        "Based on your recent activity, I adjusted your plan to optimize recovery and maintain consistency. Would you like to view today’s updated plan?";
-
+    // const responseText =
+    //     "Based on your recent activity, I adjusted your plan to optimize recovery and maintain consistency. Would you like to view today’s updated plan?";
+    const responseText2 =
+        "Since you wanna reduce soome weight the best choice is a fitness coach and  Dr.Neel Rajan is a perfect choice for you";
     // Replace "Thinking..." with streaming text
     _messages.removeLast();
     _streamingText = "";
@@ -940,9 +947,9 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {});
 
     // Stream text like ChatGPT
-    for (int i = 0; i < responseText.length; i++) {
+    for (int i = 0; i < responseText2.length; i++) {
       await Future.delayed(const Duration(milliseconds: 30));
-      _streamingText = responseText.substring(0, i + 1);
+      _streamingText = responseText2.substring(0, i + 1);
       setState(() {
         _messages[_messages.length - 1] = ChatMessage(
           text: _streamingText,
@@ -1198,7 +1205,7 @@ class ChatBubble extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Text(
+              child: SelectableText(
                 message.text,
                 style: TextStyle(
                   color: message.isUser ? Colors.white : Colors.black87,
