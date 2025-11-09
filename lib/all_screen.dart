@@ -80,7 +80,21 @@ class _HomeDashboardState extends State<HomeDashboard> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const ChatScreen()),
+            MaterialPageRoute(
+              builder: (context) => ChatScreen(
+                title: "Project Amara",
+                subtitle: "Your AI Health Coach",
+                leadingIcon: Icons.psychology,
+                initialMessages: [
+                  ChatMessage(
+                    text:
+                        "Hi Riya! I’m Amara, your AI health coach. How can I help you today?",
+                    isUser: false,
+                    timestamp: DateTime.now(),
+                  ),
+                ],
+              ),
+            ),
           );
         },
         backgroundColor: const Color(0xFF00BFA5),
@@ -883,9 +897,20 @@ class ProgressScreen extends StatelessWidget {
   }
 }
 
-// ============= CHAT SCREEN =============
+// ===================== CHAT SCREEN (Reusable) =====================
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({Key? key}) : super(key: key);
+  final String title; // e.g. "Project Amara"
+  final String subtitle; // e.g. "Your AI Health Coach"
+  final IconData? leadingIcon; // optional icon for appbar
+  final List<ChatMessage> initialMessages; // messages to show at start
+
+  const ChatScreen({
+    Key? key,
+    required this.title,
+    required this.subtitle,
+    this.leadingIcon = Icons.psychology,
+    this.initialMessages = const [],
+  }) : super(key: key);
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -893,35 +918,18 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      text:
-          'Hi Riya! I\'m Amara, your AI health coach. How can I help you today?',
-      isUser: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-    ),
-    ChatMessage(
-      text: 'Why did you reduce my workout load today?',
-      isUser: true,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 4)),
-    ),
-    ChatMessage(
-      text:
-          'Great question! I noticed your HRV dropped to 58ms this morning (down from your 7-day average of 68ms), which indicates your body needs more recovery. Your sleep quality was also slightly lower last night at 6.2 hours. I adjusted today\'s workout from high-intensity to a light 15-minute walk to prioritize recovery.',
-      isUser: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 3)),
-      quickActions: ['View today\'s plan', 'See HRV trends', 'Adjust manually'],
-    ),
-  ];
-
+  late List<ChatMessage> _messages;
   bool _isTyping = false;
   String _streamingText = "";
 
-  // Simulates ChatGPT-like streaming text response
+  @override
+  void initState() {
+    super.initState();
+    _messages = List.from(widget.initialMessages);
+  }
+
   Future<void> _simulateAIResponse(String userMessage) async {
     setState(() => _isTyping = true);
-
-    // Add "Thinking..." placeholder message
     _messages.add(
       ChatMessage(
         text: "Thinking...",
@@ -933,12 +941,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     await Future.delayed(const Duration(seconds: 1));
 
-    // Dummy AI response for now (you can later replace with real backend text stream)
-    // const responseText =
-    //     "Based on your recent activity, I adjusted your plan to optimize recovery and maintain consistency. Would you like to view today’s updated plan?";
-    const responseText2 =
-        "Since you wanna reduce soome weight the best choice is a fitness coach and  Dr.Neel Rajan is a perfect choice for you";
-    // Replace "Thinking..." with streaming text
+    const responseText =
+        "Since you wanna reduce some weight, the best choice is a fitness coach and Dr. Neel Rajan is a perfect choice for you.";
+
     _messages.removeLast();
     _streamingText = "";
     _messages.add(
@@ -946,10 +951,9 @@ class _ChatScreenState extends State<ChatScreen> {
     );
     setState(() {});
 
-    // Stream text like ChatGPT
-    for (int i = 0; i < responseText2.length; i++) {
+    for (int i = 0; i < responseText.length; i++) {
       await Future.delayed(const Duration(milliseconds: 30));
-      _streamingText = responseText2.substring(0, i + 1);
+      _streamingText = responseText.substring(0, i + 1);
       setState(() {
         _messages[_messages.length - 1] = ChatMessage(
           text: _streamingText,
@@ -977,8 +981,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: const Icon(
-                Icons.psychology,
+              child: Icon(
+                widget.leadingIcon ?? Icons.chat,
                 color: Colors.white,
                 size: 20,
               ),
@@ -986,14 +990,17 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'Project Amara',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  widget.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
-                  'Your AI Health Coach',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  widget.subtitle,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
               ],
             ),
@@ -1009,9 +1016,8 @@ class _ChatScreenState extends State<ChatScreen> {
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                return ChatBubble(message: _messages[index]);
-              },
+              itemBuilder: (context, index) =>
+                  ChatBubble(message: _messages[index]),
             ),
           ),
           if (_isTyping)
@@ -1054,7 +1060,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: TextField(
               controller: _messageController,
               decoration: InputDecoration(
-                hintText: 'Ask Amara anything...',
+                hintText: 'Ask something...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
@@ -1103,56 +1109,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-// ============= TYPING INDICATOR (3 dots) =============
-class TypingIndicator extends StatefulWidget {
-  const TypingIndicator({Key? key}) : super(key: key);
-
-  @override
-  State<TypingIndicator> createState() => _TypingIndicatorState();
-}
-
-class _TypingIndicatorState extends State<TypingIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(3, (i) {
-        return FadeTransition(
-          opacity: Tween(begin: 0.2, end: 1.0).animate(
-            CurvedAnimation(
-              parent: _controller,
-              curve: Interval(i * 0.2, 1.0, curve: Curves.easeInOut),
-            ),
-          ),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 3),
-            child: CircleAvatar(radius: 3, backgroundColor: Colors.teal),
-          ),
-        );
-      }),
-    );
-  }
-}
-
-// ============= CHAT MESSAGE MODEL =============
+// ===================== MESSAGE MODEL =====================
 class ChatMessage {
   final String text;
   final bool isUser;
@@ -1167,7 +1124,7 @@ class ChatMessage {
   });
 }
 
-// ============= CHAT BUBBLE WIDGET =============
+// ===================== CHAT BUBBLE =====================
 class ChatBubble extends StatelessWidget {
   final ChatMessage message;
 
@@ -1248,3 +1205,134 @@ class ChatBubble extends StatelessWidget {
     );
   }
 }
+
+// ===================== TYPING INDICATOR =====================
+class TypingIndicator extends StatefulWidget {
+  const TypingIndicator({Key? key}) : super(key: key);
+
+  @override
+  State<TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<TypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (i) {
+        return FadeTransition(
+          opacity: Tween(begin: 0.2, end: 1.0).animate(
+            CurvedAnimation(
+              parent: _controller,
+              curve: Interval(i * 0.2, 1.0, curve: Curves.easeInOut),
+            ),
+          ),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 3),
+            child: CircleAvatar(radius: 3, backgroundColor: Colors.teal),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// // ============= CHAT BUBBLE WIDGET =============
+// class ChatBubble extends StatelessWidget {
+//   final ChatMessage message;
+
+//   const ChatBubble({Key? key, required this.message}) : super(key: key);
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Align(
+//       alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+//       child: Container(
+//         margin: const EdgeInsets.only(bottom: 16),
+//         constraints: BoxConstraints(
+//           maxWidth: MediaQuery.of(context).size.width * 0.75,
+//         ),
+//         child: Column(
+//           crossAxisAlignment: message.isUser
+//               ? CrossAxisAlignment.end
+//               : CrossAxisAlignment.start,
+//           children: [
+//             Container(
+//               padding: const EdgeInsets.all(16),
+//               decoration: BoxDecoration(
+//                 color: message.isUser ? const Color(0xFF00BFA5) : Colors.white,
+//                 borderRadius: BorderRadius.only(
+//                   topLeft: const Radius.circular(20),
+//                   topRight: const Radius.circular(20),
+//                   bottomLeft: Radius.circular(message.isUser ? 20 : 4),
+//                   bottomRight: Radius.circular(message.isUser ? 4 : 20),
+//                 ),
+//                 boxShadow: [
+//                   BoxShadow(
+//                     color: Colors.black.withOpacity(0.05),
+//                     blurRadius: 5,
+//                     offset: const Offset(0, 2),
+//                   ),
+//                 ],
+//               ),
+//               child: SelectableText(
+//                 message.text,
+//                 style: TextStyle(
+//                   color: message.isUser ? Colors.white : Colors.black87,
+//                   fontSize: 14,
+//                   height: 1.4,
+//                 ),
+//               ),
+//             ),
+//             if (message.quickActions != null) ...[
+//               const SizedBox(height: 8),
+//               Wrap(
+//                 spacing: 8,
+//                 children: message.quickActions!
+//                     .map(
+//                       (action) => OutlinedButton(
+//                         onPressed: () {},
+//                         style: OutlinedButton.styleFrom(
+//                           side: const BorderSide(color: Color(0xFF00BFA5)),
+//                           foregroundColor: const Color(0xFF00BFA5),
+//                           padding: const EdgeInsets.symmetric(
+//                             horizontal: 12,
+//                             vertical: 8,
+//                           ),
+//                           shape: RoundedRectangleBorder(
+//                             borderRadius: BorderRadius.circular(20),
+//                           ),
+//                         ),
+//                         child: Text(
+//                           action,
+//                           style: const TextStyle(fontSize: 12),
+//                         ),
+//                       ),
+//                     )
+//                     .toList(),
+//               ),
+//             ],
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }

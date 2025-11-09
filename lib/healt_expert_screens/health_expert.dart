@@ -416,13 +416,107 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
                   ),
                 if (!_isSearching)
                   Expanded(
-                    child: ListView.builder(
+                    child: GridView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio:
+                                0.78, // Adjust for proportions like the screenshot
+                          ),
                       itemCount: healthexperts.length,
                       itemBuilder: (context, index) {
-                        return UtilityFunctionClass.buildExpertCard(
-                          healthexperts[index].item!,
-                          context,
-                          true,
+                        final expert = healthexperts[index].item!;
+                        return GestureDetector(
+                          onTap: () {
+                            UtilityFunctionClass.navigateToDetails(
+                              expert,
+                              context,
+                              true,
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.black, width: 1),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const SizedBox(height: 16),
+                                CircleAvatar(
+                                  radius: 34,
+                                  backgroundImage: NetworkImage(
+                                    expert.imageUrl,
+                                  ),
+                                  backgroundColor: Colors.grey[200],
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  expert.name,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  UtilityFunctionClass.formatType(expert.type),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: const BorderRadius.only(
+                                      bottomLeft: Radius.circular(12),
+                                      bottomRight: Radius.circular(12),
+                                    ),
+                                    border: Border(
+                                      top: BorderSide(
+                                        color: Colors.grey.shade300,
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: Colors.amber.shade600,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        expert.rating,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         );
                       },
                     ),
