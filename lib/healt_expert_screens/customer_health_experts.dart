@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:walnut_home_page/healt_expert_screens/customer_health_expert_details.dart';
 import 'package:walnut_home_page/healt_expert_screens/health_expert.dart';
 import 'package:walnut_home_page/provider/customer_healt_experts_provider.dart';
-import 'package:walnut_home_page/utility/utility_function_class.dart';
 
 class CustomerHealthExperts extends StatefulWidget {
   const CustomerHealthExperts({super.key});

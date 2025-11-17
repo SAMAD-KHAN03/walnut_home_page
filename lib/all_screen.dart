@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:walnut_home_page/fitness_data_screen.dart';
 import 'package:walnut_home_page/healt_expert_screens/health_expert.dart';
+import 'package:walnut_home_page/health_analytics_dashboard/four_dimension_user_info_dashboard.dart';
 import 'package:walnut_home_page/planscreen/plans_screen.dart';
 import 'package:walnut_home_page/weeklyplanscreens/weekly_plan.dart';
 
@@ -41,7 +42,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const PlansScreen(),
-    const FitnessDataScreen(),
+    const FourDimensionUserInfoDashboard(),
     const ProgressScreen(),
     const HealthExpert_Screen(),
   ];
