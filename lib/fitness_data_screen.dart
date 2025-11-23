@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:walnut_home_page/provider/health_provider.dart';
 
 // Global Health instance
+final health = Health();
 
 class FitnessDataScreen extends StatefulWidget {
   const FitnessDataScreen({super.key});
@@ -18,7 +17,6 @@ class FitnessDataScreen extends StatefulWidget {
 
 class _FitnessDataScreenState extends State<FitnessDataScreen> {
   bool _isLoading = false;
-  late Health health;
   bool _isAuthorized = false;
   HealthConnectSdkStatus? _healthConnectStatus;
 
@@ -84,20 +82,8 @@ class _FitnessDataScreenState extends State<FitnessDataScreen> {
   @override
   void initState() {
     super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    // Get health instance from provider
-    health = HealthProvider.of(context);
-
-    // Now configure and check status (only once)
-    if (!_isLoading) {
-      health.configure();
-      _checkHealthConnectStatus();
-    }
+    health.configure();
+    _checkHealthConnectStatus();
   }
 
   /// Check Health Connect status on Android

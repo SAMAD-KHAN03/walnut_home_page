@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:walnut_home_page/planscreen/models/adjustment_item.dart';
-import 'package:walnut_home_page/planscreen/models/expert_team.dart';
-import 'package:walnut_home_page/planscreen/models/insight_item.dart';
-import 'package:walnut_home_page/planscreen/models/protocol_data.dart';
-import 'package:walnut_home_page/planscreen/models/protocol_overview.dart';
-import 'package:walnut_home_page/planscreen/models/timeline_day.dart';
+import 'package:walnut_home_page/models/adjustment_item.dart';
+import 'package:walnut_home_page/models/expert_team.dart';
+import 'package:walnut_home_page/models/insight_item.dart';
+import 'package:walnut_home_page/models/protocol_data.dart';
+import 'package:walnut_home_page/models/protocol_overview.dart';
+import 'package:walnut_home_page/models/timeline_day.dart';
 
 final mockdataArray = [
   ProtocolData(

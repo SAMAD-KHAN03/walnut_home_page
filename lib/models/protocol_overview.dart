@@ -1,5 +1,5 @@
 
-import 'package:walnut_home_page/planscreen/models/expert_team.dart';
+import 'package:walnut_home_page/models/expert_team.dart';
 
 class ProtocolOverview {
   final List<String> goals;

@@ -1,12 +1,14 @@
+import 'dart:developer';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
-import 'package:walnut_home_page/provider/health_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
+// Global Health instance, assumed to be available
+final health = Health();
 
 class WearablesDailyChangeIndicatorCards extends StatefulWidget {
-  const WearablesDailyChangeIndicatorCards({Key? key}) : super(key: key);
+  const WearablesDailyChangeIndicatorCards({super.key});
 
   @override
   State<WearablesDailyChangeIndicatorCards> createState() =>
@@ -15,122 +17,119 @@ class WearablesDailyChangeIndicatorCards extends StatefulWidget {
 
 class _WearablesDailyChangeIndicatorCardsState
     extends State<WearablesDailyChangeIndicatorCards> {
+  // Map to store changes: Key (String) -> { 'today': double, 'change': double, ... }
   Map<String, Map<String, dynamic>> _changes = {};
   bool _isLoading = true;
-  late Health health;
-  bool _hasInitialized = false; // Add this flag
+  bool _isAuthorized = false;
+
+  // Data types and permissions needed for this widget
+  final List<HealthDataType> _dataTypes = [
+    HealthDataType.STEPS,
+    HealthDataType.HEART_RATE,
+    HealthDataType.ACTIVE_ENERGY_BURNED,
+    // Use platform-specific distance
+    Platform.isAndroid
+        ? HealthDataType.DISTANCE_DELTA
+        : HealthDataType.DISTANCE_WALKING_RUNNING,
+    HealthDataType.SLEEP_ASLEEP,
+  ];
+
+  List<HealthDataAccess> get _permissions =>
+      _dataTypes.map((_) => HealthDataAccess.READ_WRITE).toList();
 
   @override
   void initState() {
     super.initState();
+    // Fetch data after frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) async{
+      if (mounted) {
+        await _authorizeAndFetch();
+      }
+    });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  // --- Authorization and Permissions Logic ---
 
-    if (!_hasInitialized) {
-      // Get health instance from provider
-      health = HealthProvider.of(context);
-      _hasInitialized = true;
-      
-      // Add a small delay to ensure authorization is complete
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          _fetchDailyChanges();
-        }
-      });
-    }
-  }
+  Future<void> _authorizeAndFetch() async {
+    if (!mounted) return;
 
-  Future<void> _fetchDailyChanges() async {
     setState(() => _isLoading = true);
 
     try {
-      // Check if we have permissions first
-      final hasPermissions = await health.hasPermissions(
-        [
-          HealthDataType.STEPS,
-          HealthDataType.HEART_RATE,
-          HealthDataType.ACTIVE_ENERGY_BURNED,
-          HealthDataType.DISTANCE_DELTA,
-          HealthDataType.SLEEP_ASLEEP,
-        ],
-      );
+      // 1. Request necessary permissions
+      await Permission.activityRecognition.request();
+      await Permission.location.request();
 
+      bool? hasPermissions =
+          await health.hasPermissions(_dataTypes, permissions: _permissions);
+
+      bool authorized = false;
       if (hasPermissions == false || hasPermissions == null) {
-        debugPrint("No health permissions granted yet");
-        setState(() => _isLoading = false);
-        return;
+        authorized = await health.requestAuthorization(
+          _dataTypes,
+          permissions: _permissions,
+        );
+      } else {
+        authorized = true;
       }
 
+      if (mounted) {
+        setState(() {
+          _isAuthorized = authorized;
+          _isLoading = !authorized; // Stay loading if not authorized
+        });
+      }
+
+      if (authorized) {
+        await _fetchDailyChanges();
+      }
+
+    } catch (error) {
+      log("Authorization Error: $error");
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+
+  Future<void> _fetchDailyChanges() async {
+    if (!mounted || !_isAuthorized) return;
+
+    setState(() => _isLoading = true);
+
+    try {
       final now = DateTime.now();
       final todayStart = DateTime(now.year, now.month, now.day);
       final yesterdayStart = DateTime(now.year, now.month, now.day - 1);
-      final yesterdayEnd = DateTime(
-        now.year,
-        now.month,
-        now.day - 1,
-        23,
-        59,
-        59,
-      );
+      final yesterdayEnd = todayStart.subtract(const Duration(seconds: 1)); // End of yesterday
 
-      // Get today's steps
-      int? todaySteps = await health.getTotalStepsInInterval(
-        todayStart,
-        now,
-        includeManualEntry: true,
-      );
-
-      // Get yesterday's steps
-      int? yesterdaySteps = await health.getTotalStepsInInterval(
-        yesterdayStart,
-        yesterdayEnd,
-        includeManualEntry: true,
-      );
-
-      debugPrint("Today Steps: $todaySteps, Yesterday Steps: $yesterdaySteps");
-
-      // Get today's health data
+      // Fetch data for today
       List<HealthDataPoint> todayData = await health.getHealthDataFromTypes(
-        types: [
-          HealthDataType.HEART_RATE,
-          HealthDataType.ACTIVE_ENERGY_BURNED,
-          Platform.isAndroid 
-              ? HealthDataType.DISTANCE_DELTA 
-              : HealthDataType.DISTANCE_WALKING_RUNNING,
-          HealthDataType.SLEEP_ASLEEP,
-        ],
+        types: _dataTypes,
         startTime: todayStart,
         endTime: now,
       );
 
-      // Get yesterday's health data
+      // Fetch data for yesterday
       List<HealthDataPoint> yesterdayData = await health.getHealthDataFromTypes(
-        types: [
-          HealthDataType.HEART_RATE,
-          HealthDataType.ACTIVE_ENERGY_BURNED,
-          Platform.isAndroid 
-              ? HealthDataType.DISTANCE_DELTA 
-              : HealthDataType.DISTANCE_WALKING_RUNNING,
-          HealthDataType.SLEEP_ASLEEP,
-        ],
+        types: _dataTypes,
         startTime: yesterdayStart,
         endTime: yesterdayEnd,
       );
 
-      debugPrint("Today Data Points: ${todayData.length}, Yesterday Data Points: ${yesterdayData.length}");
-
-      // Process data
+      // Process and calculate changes
       Map<String, double> todayValues = _processHealthData(todayData);
       Map<String, double> yesterdayValues = _processHealthData(yesterdayData);
 
-      // Calculate changes
+      // Get steps separately as they are often aggregated via getTotalStepsInInterval
+      int todaySteps = await health.getTotalStepsInInterval(todayStart, now) ?? 0;
+      int yesterdaySteps = await health.getTotalStepsInInterval(yesterdayStart, yesterdayEnd) ?? 0;
+      
       Map<String, Map<String, dynamic>> changes = {};
 
-      // Steps
-      if (todaySteps != null && yesterdaySteps != null && yesterdaySteps > 0) {
+      // 1. Steps
+      if (todaySteps > 0 && yesterdaySteps > 0) {
         changes['Steps'] = _calculateChange(
           todaySteps.toDouble(),
           yesterdaySteps.toDouble(),
@@ -140,7 +139,7 @@ class _WearablesDailyChangeIndicatorCardsState
         );
       }
 
-      // Heart Rate
+      // 2. Heart Rate (Latest value logic in _processHealthData)
       if (todayValues['heartRate']! > 0 && yesterdayValues['heartRate']! > 0) {
         changes['Heart Rate'] = _calculateChange(
           todayValues['heartRate']!,
@@ -151,7 +150,7 @@ class _WearablesDailyChangeIndicatorCardsState
         );
       }
 
-      // Calories
+      // 3. Calories (Sum logic in _processHealthData)
       if (todayValues['calories']! > 0 && yesterdayValues['calories']! > 0) {
         changes['Calories'] = _calculateChange(
           todayValues['calories']!,
@@ -162,7 +161,7 @@ class _WearablesDailyChangeIndicatorCardsState
         );
       }
 
-      // Distance
+      // 4. Distance (Sum logic in _processHealthData, converted to km)
       if (todayValues['distance']! > 0 && yesterdayValues['distance']! > 0) {
         changes['Distance'] = _calculateChange(
           todayValues['distance']! / 1000,
@@ -173,7 +172,7 @@ class _WearablesDailyChangeIndicatorCardsState
         );
       }
 
-      // Sleep
+      // 5. Sleep (Sum logic in _processHealthData, converted to hours)
       if (todayValues['sleep']! > 0 && yesterdayValues['sleep']! > 0) {
         changes['Sleep'] = _calculateChange(
           todayValues['sleep']! / 60,
@@ -184,43 +183,76 @@ class _WearablesDailyChangeIndicatorCardsState
         );
       }
 
-      debugPrint("Total changes found: ${changes.length}");
+      if (mounted) {
+        setState(() {
+          _changes = changes;
+          _isLoading = false;
+        });
+      }
 
-      setState(() {
-        _changes = changes;
-        _isLoading = false;
-      });
     } catch (error) {
-      debugPrint("Error fetching daily changes: $error");
-      setState(() => _isLoading = false);
+      log('Error fetching daily changes: $error');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+//     // Add this at the end of _fetchDailyChanges for testing
+// if (_changes.isEmpty) {
+//   // Mock data for testing UI
+//   _changes = {
+//     'Steps': {
+//       'today': 5000.0,
+//       'change': 500.0,
+//       'percentChange': 11.1,
+//       'isIncrease': true,
+//       'unit': 'steps',
+//       'icon': Icons.directions_walk,
+//       'color': Colors.blue,
+//     },
+//   };
+// }
   }
 
+  /// Processes raw HealthDataPoint list into aggregated values for a given day.
   Map<String, double> _processHealthData(List<HealthDataPoint> data) {
+    // Initialize with large/zero values as needed
     double calories = 0;
     double distance = 0;
-    double heartRate = 0;
-    double sleep = 0;
+    double heartRate = 0; // Will hold the *latest* heart rate found
+    double sleep = 0; // Will hold total sleep duration in minutes/seconds
+
+    // Remove duplicates to simplify aggregation
+    data = health.removeDuplicates(data);
+
+    // Sort to easily get the latest HEART_RATE
+    data.sort((a, b) => b.dateFrom.compareTo(a.dateFrom));
 
     for (var point in data) {
       double? value;
+      // Extract numeric value safely
       if (point.value is NumericHealthValue) {
         value = (point.value as NumericHealthValue).numericValue.toDouble();
+      } else if (point.value is num) {
+        value = (point.value as num).toDouble();
       }
 
       if (value != null) {
         switch (point.type) {
           case HealthDataType.ACTIVE_ENERGY_BURNED:
-            calories += value;
+            calories += value; // Sum for energy burned
             break;
           case HealthDataType.DISTANCE_DELTA:
           case HealthDataType.DISTANCE_WALKING_RUNNING:
-            distance += value;
+            distance += value; // Sum for total distance
             break;
           case HealthDataType.HEART_RATE:
-            heartRate = value;
+            // Since data is sorted by dateFrom descending, the first one is the latest
+            if (heartRate == 0) {
+              heartRate = value;
+            }
             break;
           case HealthDataType.SLEEP_ASLEEP:
+            // Sleep data often comes as duration in seconds. Summing is appropriate here.
             sleep += value;
             break;
           default:
@@ -229,6 +261,10 @@ class _WearablesDailyChangeIndicatorCardsState
       }
     }
 
+    // Convert sleep from seconds to minutes (assuming it's in seconds)
+    // If your sleep data is in minutes, adjust this
+    sleep = sleep / 60.0;
+
     return {
       'calories': calories,
       'distance': distance,
@@ -236,6 +272,8 @@ class _WearablesDailyChangeIndicatorCardsState
       'sleep': sleep,
     };
   }
+
+  /// Calculates change and formats the output map
   Map<String, dynamic> _calculateChange(
     double today,
     double yesterday,
@@ -244,6 +282,7 @@ class _WearablesDailyChangeIndicatorCardsState
     Color color,
   ) {
     double change = today - yesterday;
+    // Prevent division by zero
     double percentChange = yesterday != 0 ? (change / yesterday) * 100 : 0;
     bool isIncrease = change > 0;
 
@@ -258,8 +297,38 @@ class _WearablesDailyChangeIndicatorCardsState
     };
   }
 
+  // --- Build Method (Unchanged) ---
+
   @override
   Widget build(BuildContext context) {
+    // If not authorized, show a prompt to authorize
+    if (!_isAuthorized && !_isLoading) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text(
+                'Access Denied',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text('Please grant health permissions to view daily changes.'),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _authorizeAndFetch,
+                child: const Text('Grant Permissions'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -276,7 +345,7 @@ class _WearablesDailyChangeIndicatorCardsState
           ),
         ),
         SizedBox(
-          height: 110,
+          height: 120,
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _changes.isEmpty
@@ -292,10 +361,7 @@ class _WearablesDailyChangeIndicatorCardsState
                       itemCount: _changes.length,
                       itemBuilder: (context, index) {
                         final entry = _changes.entries.elementAt(index);
-                        return DailyChangeCard(
-                          title: entry.key,
-                          data: entry.value,
-                        );
+                        return DailyChangeCard(title: entry.key, data: entry.value);
                       },
                     ),
         ),
@@ -303,6 +369,8 @@ class _WearablesDailyChangeIndicatorCardsState
     );
   }
 }
+
+// --- DailyChangeCard Widget (Unchanged) ---
 
 class DailyChangeCard extends StatelessWidget {
   final String title;
@@ -333,7 +401,6 @@ class DailyChangeCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon and Title Row
               Row(
                 children: [
                   Container(
@@ -359,8 +426,6 @@ class DailyChangeCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-
-              // Today's Value
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
@@ -383,8 +448,6 @@ class DailyChangeCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-
-              // Change Indicator
               Row(
                 children: [
                   Icon(

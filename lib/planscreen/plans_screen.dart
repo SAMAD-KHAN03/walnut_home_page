@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:walnut_home_page/planscreen/models/mock_data.dart';
-import 'package:walnut_home_page/planscreen/models/protocol_data.dart';
+import 'package:walnut_home_page/models/mock_data.dart';
+import 'package:walnut_home_page/models/protocol_data.dart';
 import 'package:walnut_home_page/planscreen/plan_details_screen.dart';
 
 class PlansScreen extends StatefulWidget {
