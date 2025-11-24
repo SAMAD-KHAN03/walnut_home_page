@@ -14,6 +14,7 @@ import 'package:walnut_home_page/models/timeline_day.dart';
 
 final Color primaryColor = const Color(0xFF00BFA5);
 
+// ignore: must_be_immutable
 class PlanDetailsScreen extends StatelessWidget {
   ProtocolData mockProtocolData;
   PlanDetailsScreen({Key? key, required this.mockProtocolData})

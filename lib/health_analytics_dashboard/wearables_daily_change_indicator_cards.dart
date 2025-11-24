@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:walnut_home_page/health_analytics_detailed_screens/fitness_data_screen.dart';
 
 // Global Health instance, assumed to be available
 final health = Health();
@@ -41,7 +42,7 @@ class _WearablesDailyChangeIndicatorCardsState
   void initState() {
     super.initState();
     // Fetch data after frame is built
-    WidgetsBinding.instance.addPostFrameCallback((_) async{
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         await _authorizeAndFetch();
       }
@@ -60,8 +61,10 @@ class _WearablesDailyChangeIndicatorCardsState
       await Permission.activityRecognition.request();
       await Permission.location.request();
 
-      bool? hasPermissions =
-          await health.hasPermissions(_dataTypes, permissions: _permissions);
+      bool? hasPermissions = await health.hasPermissions(
+        _dataTypes,
+        permissions: _permissions,
+      );
 
       bool authorized = false;
       if (hasPermissions == false || hasPermissions == null) {
@@ -83,7 +86,6 @@ class _WearablesDailyChangeIndicatorCardsState
       if (authorized) {
         await _fetchDailyChanges();
       }
-
     } catch (error) {
       log("Authorization Error: $error");
       if (mounted) {
@@ -91,7 +93,6 @@ class _WearablesDailyChangeIndicatorCardsState
       }
     }
   }
-
 
   Future<void> _fetchDailyChanges() async {
     if (!mounted || !_isAuthorized) return;
@@ -102,7 +103,9 @@ class _WearablesDailyChangeIndicatorCardsState
       final now = DateTime.now();
       final todayStart = DateTime(now.year, now.month, now.day);
       final yesterdayStart = DateTime(now.year, now.month, now.day - 1);
-      final yesterdayEnd = todayStart.subtract(const Duration(seconds: 1)); // End of yesterday
+      final yesterdayEnd = todayStart.subtract(
+        const Duration(seconds: 1),
+      ); // End of yesterday
 
       // Fetch data for today
       List<HealthDataPoint> todayData = await health.getHealthDataFromTypes(
@@ -123,9 +126,12 @@ class _WearablesDailyChangeIndicatorCardsState
       Map<String, double> yesterdayValues = _processHealthData(yesterdayData);
 
       // Get steps separately as they are often aggregated via getTotalStepsInInterval
-      int todaySteps = await health.getTotalStepsInInterval(todayStart, now) ?? 0;
-      int yesterdaySteps = await health.getTotalStepsInInterval(yesterdayStart, yesterdayEnd) ?? 0;
-      
+      int todaySteps =
+          await health.getTotalStepsInInterval(todayStart, now) ?? 0;
+      int yesterdaySteps =
+          await health.getTotalStepsInInterval(yesterdayStart, yesterdayEnd) ??
+          0;
+
       Map<String, Map<String, dynamic>> changes = {};
 
       // 1. Steps
@@ -189,28 +195,27 @@ class _WearablesDailyChangeIndicatorCardsState
           _isLoading = false;
         });
       }
-
     } catch (error) {
       log('Error fetching daily changes: $error');
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
-//     // Add this at the end of _fetchDailyChanges for testing
-// if (_changes.isEmpty) {
-//   // Mock data for testing UI
-//   _changes = {
-//     'Steps': {
-//       'today': 5000.0,
-//       'change': 500.0,
-//       'percentChange': 11.1,
-//       'isIncrease': true,
-//       'unit': 'steps',
-//       'icon': Icons.directions_walk,
-//       'color': Colors.blue,
-//     },
-//   };
-// }
+    //     // Add this at the end of _fetchDailyChanges for testing
+    // if (_changes.isEmpty) {
+    //   // Mock data for testing UI
+    //   _changes = {
+    //     'Steps': {
+    //       'today': 5000.0,
+    //       'change': 500.0,
+    //       'percentChange': 11.1,
+    //       'isIncrease': true,
+    //       'unit': 'steps',
+    //       'icon': Icons.directions_walk,
+    //       'color': Colors.blue,
+    //     },
+    //   };
+    // }
   }
 
   /// Processes raw HealthDataPoint list into aggregated values for a given day.
@@ -317,7 +322,9 @@ class _WearablesDailyChangeIndicatorCardsState
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text('Please grant health permissions to view daily changes.'),
+              const Text(
+                'Please grant health permissions to view daily changes.',
+              ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _authorizeAndFetch,
@@ -333,15 +340,30 @@ class _WearablesDailyChangeIndicatorCardsState
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: Text(
-            'Daily Changes',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Daily Health Update',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => FitnessDataScreen(),
+                    ),
+                  );
+                },
+                child: Text("View Details"),
+              ),
+            ],
           ),
         ),
         SizedBox(
@@ -349,21 +371,21 @@ class _WearablesDailyChangeIndicatorCardsState
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _changes.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No data available',
-                        style: TextStyle(color: Colors.grey[400]),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _changes.length,
-                      itemBuilder: (context, index) {
-                        final entry = _changes.entries.elementAt(index);
-                        return DailyChangeCard(title: entry.key, data: entry.value);
-                      },
-                    ),
+              ? Center(
+                  child: Text(
+                    'No data available',
+                    style: TextStyle(color: Colors.grey[400]),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _changes.length,
+                  itemBuilder: (context, index) {
+                    final entry = _changes.entries.elementAt(index);
+                    return DailyChangeCard(title: entry.key, data: entry.value);
+                  },
+                ),
         ),
       ],
     );
@@ -377,7 +399,7 @@ class DailyChangeCard extends StatelessWidget {
   final Map<String, dynamic> data;
 
   const DailyChangeCard({Key? key, required this.title, required this.data})
-      : super(key: key);
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {

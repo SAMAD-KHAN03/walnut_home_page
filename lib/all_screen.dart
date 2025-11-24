@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:walnut_home_page/fitness_data_screen.dart';
+import 'package:walnut_home_page/health_analytics_detailed_screens/fitness_data_screen.dart';
 import 'package:walnut_home_page/healt_expert_screens/health_expert.dart';
 import 'package:walnut_home_page/health_analytics_dashboard/four_dimension_user_info_dashboard.dart';
 import 'package:walnut_home_page/planscreen/plans_screen.dart';
