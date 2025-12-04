@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:walnut_home_page/health_analytics_detailed_screens/lifestyle_screen.dart';
 import 'package:walnut_home_page/models/missed_task.dart';
 
 class MissedTasksHorizontalScroll extends StatelessWidget {
@@ -26,7 +27,16 @@ class MissedTasksHorizontalScroll extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-              TextButton(onPressed: () {}, child: Text("View Details")),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => LifestyleDashboard(),
+                    ),
+                  );
+                },
+                child: Text("View Details"),
+              ),
             ],
           ),
         ),
