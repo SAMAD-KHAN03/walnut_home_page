@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:walnut_home_page/health_analytics_detailed_screens/medical_report_detailed_screen.dart';
-import 'package:walnut_home_page/models/health_details_dummy_data.dart';
+import 'package:walnut_home_page/data/health_details_dummy_data.dart';
 
 class LabParameterCard extends StatelessWidget {
   final String parameterName;
