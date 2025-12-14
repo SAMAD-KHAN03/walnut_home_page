@@ -231,7 +231,7 @@ class DashboardScreen extends StatelessWidget {
                       );
                     },
                     child: Container(
-                      width: 150,
+                      width: 10,
                       height: 35,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(32),
@@ -244,7 +244,7 @@ class DashboardScreen extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          "View Weekly Plan",
+                          "Weekly/Monthly Plans",
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
