@@ -1,3 +1,7 @@
+import 'dart:developer';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:searchfield/searchfield.dart';
@@ -20,6 +24,7 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
   bool _isLoading = true;
   bool _isSearching = false;
   String? _selectedFilter;
+  File? selectedfile;
 
   @override
   void initState() {
@@ -291,6 +296,19 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
     });
   }
 
+  Future<void> pickfile() async {
+    final FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null) {
+      setState(() {
+        selectedfile = File(result.files.single.path!);
+        log(selectedfile.runtimeType.toString());
+      });
+    } else {
+      log("user canceled");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -298,28 +316,40 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
         title: const Text('Health Experts'),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => CustomerHealthExperts(),
-                  ),
-                );
-              },
-              child: Text("Your Experts"),
-            ),
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8.0, 8, 8, 0),
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => CustomerHealthExperts(),
+                            ),
+                          );
+                        },
+                        child: Text("Your Experts"),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8.0, 8, 8, 0),
+                      child: TextButton(
+                        onPressed: () async {
+                          await pickfile();
+                        },
+                        child: Text("Upload Health Report"),
+                      ),
+                    ),
+                  ],
+                ),
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.fromLTRB(16.0, 8, 16, 16),
                   child: Row(
                     children: [
                       Expanded(

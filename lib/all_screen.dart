@@ -105,146 +105,144 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF00BFA5),
-                    const Color(0xFF00BFA5).withOpacity(0.8),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF00BFA5),
+                  const Color(0xFF00BFA5).withOpacity(0.8),
+                ],
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Good Morning, Riya 👋',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Monday, October 27, 2025',
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                    const CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.person, color: Color(0xFF00BFA5)),
+                    ),
                   ],
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
                     children: [
+                      const Text('🌿', style: TextStyle(fontSize: 32)),
+                      const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
                           Text(
-                            'Good Morning, Riya 👋',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Monday, October 27, 2025',
+                            'Recovery Score',
                             style: TextStyle(
                               color: Colors.white70,
-                              fontSize: 14,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            '83%',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
-                      const CircleAvatar(
-                        radius: 24,
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.person, color: Color(0xFF00BFA5)),
+                      const Spacer(),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF00BFA5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('View Plan'),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Text('🌿', style: TextStyle(fontSize: 32)),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Recovery Score',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                            Text(
-                              '83%',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF00BFA5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          child: const Text('View Plan'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
 
-            // Key Metrics Carousel
-            const SizedBox(height: 20),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Key Metrics',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C3E50),
-                    ),
+          // Key Metrics Carousel
+          const SizedBox(height: 20),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Key Metrics',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C3E50),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (BuildContext context) =>
-                              // HabitTimelineScreen(),
-                              WeeklyMonthlyTaskScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 10,
-                      height: 35,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(32),
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFF00BFA5),
-                            const Color(0xFF00BFA5).withOpacity(0.8),
-                          ],
-                        ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (BuildContext context) =>
+                            // HabitTimelineScreen(),
+                            WeeklyMonthlyTaskScreen(),
                       ),
+                    );
+                  },
+                  child: Container(
+                    // width: 10,
+                    height: 35,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(32),
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF00BFA5),
+                          const Color(0xFF00BFA5).withOpacity(0.8),
+                        ],
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
                       child: Center(
                         child: Text(
-                          "Weekly/Monthly Plans",
+                          "See Timeline",
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -253,109 +251,109 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 160,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: const [
-                  MetricCard(
-                    icon: Icons.bedtime,
-                    title: 'Sleep',
-                    value: '7.5h',
-                    subtitle: 'HRV: 68ms',
-                    color: Color(0xFF5E35B1),
-                  ),
-                  MetricCard(
-                    icon: Icons.directions_run,
-                    title: 'Activity',
-                    value: '8,432',
-                    subtitle: 'steps today',
-                    color: Color(0xFFFF6B6B),
-                  ),
-                  MetricCard(
-                    icon: Icons.psychology,
-                    title: 'Mood',
-                    value: '😊 Good',
-                    subtitle: 'Stress: Low',
-                    color: Color(0xFFFFB347),
-                  ),
-                  MetricCard(
-                    icon: Icons.restaurant,
-                    title: 'Nutrition',
-                    value: '1,450',
-                    subtitle: 'calories',
-                    color: Color(0xFF4ECDC4),
-                  ),
-                ],
-              ),
-            ),
-
-            // Today's Tasks
-            const SizedBox(height: 24),
-            Padding(
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 160,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
-                    'Today\'s Tasks',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C3E50),
-                    ),
+              children: const [
+                MetricCard(
+                  icon: Icons.bedtime,
+                  title: 'Sleep',
+                  value: '7.5h',
+                  subtitle: 'HRV: 68ms',
+                  color: Color(0xFF5E35B1),
+                ),
+                MetricCard(
+                  icon: Icons.directions_run,
+                  title: 'Activity',
+                  value: '8,432',
+                  subtitle: 'steps today',
+                  color: Color(0xFFFF6B6B),
+                ),
+                MetricCard(
+                  icon: Icons.psychology,
+                  title: 'Mood',
+                  value: '😊 Good',
+                  subtitle: 'Stress: Low',
+                  color: Color(0xFFFFB347),
+                ),
+                MetricCard(
+                  icon: Icons.restaurant,
+                  title: 'Nutrition',
+                  value: '1,450',
+                  subtitle: 'calories',
+                  color: Color(0xFF4ECDC4),
+                ),
+              ],
+            ),
+          ),
+
+          // Today's Tasks
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text(
+                  'Today\'s Tasks',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C3E50),
                   ),
-                  Text(
-                    '3 of 7 completed',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
+                ),
+                Text(
+                  '3 of 7 completed',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            const TaskCard(
-              icon: Icons.wb_sunny,
-              title: 'Morning Sunlight',
-              subtitle: '5 mins outside before 9AM',
-              timeWindow: '7:00 - 9:00 AM',
-              completed: true,
-            ),
-            const TaskCard(
-              icon: Icons.restaurant_menu,
-              title: 'High-protein breakfast',
-              subtitle: 'Include eggs or Greek yogurt',
-              timeWindow: '8:00 - 10:00 AM',
-              completed: true,
-            ),
-            const TaskCard(
-              icon: Icons.local_drink,
-              title: 'Hydration Check',
-              subtitle: 'Drink 500ml water',
-              timeWindow: '10:00 AM',
-              completed: false,
-            ),
-            const TaskCard(
-              icon: Icons.fitness_center,
-              title: 'Light Movement',
-              subtitle: '15-min walk or yoga',
-              timeWindow: '12:00 - 2:00 PM',
-              completed: false,
-            ),
-            const TaskCard(
-              icon: Icons.medication,
-              title: 'Magnesium glycinate',
-              subtitle: '200mg after dinner',
-              timeWindow: '8:00 - 9:00 PM',
-              completed: false,
-            ),
-            const SizedBox(height: 100),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          const TaskCard(
+            icon: Icons.wb_sunny,
+            title: 'Morning Sunlight',
+            subtitle: '5 mins outside before 9AM',
+            timeWindow: '7:00 - 9:00 AM',
+            completed: true,
+          ),
+          const TaskCard(
+            icon: Icons.restaurant_menu,
+            title: 'High-protein breakfast',
+            subtitle: 'Include eggs or Greek yogurt',
+            timeWindow: '8:00 - 10:00 AM',
+            completed: true,
+          ),
+          const TaskCard(
+            icon: Icons.local_drink,
+            title: 'Hydration Check',
+            subtitle: 'Drink 500ml water',
+            timeWindow: '10:00 AM',
+            completed: false,
+          ),
+          const TaskCard(
+            icon: Icons.fitness_center,
+            title: 'Light Movement',
+            subtitle: '15-min walk or yoga',
+            timeWindow: '12:00 - 2:00 PM',
+            completed: false,
+          ),
+          const TaskCard(
+            icon: Icons.medication,
+            title: 'Magnesium glycinate',
+            subtitle: '200mg after dinner',
+            timeWindow: '8:00 - 9:00 PM',
+            completed: false,
+          ),
+          const SizedBox(height: 100),
+        ],
       ),
     );
   }
