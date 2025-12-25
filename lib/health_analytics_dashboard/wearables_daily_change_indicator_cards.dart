@@ -350,7 +350,7 @@ class _WearablesDailyChangeIndicatorCardsState
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  // color: Colors.black87,
                 ),
               ),
               TextButton(
@@ -371,12 +371,7 @@ class _WearablesDailyChangeIndicatorCardsState
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _changes.isEmpty
-              ? Center(
-                  child: Text(
-                    'No data available',
-                    style: TextStyle(color: Colors.grey[400]),
-                  ),
-                )
+              ? Center(child: Text('No data available', style: TextStyle()))
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,

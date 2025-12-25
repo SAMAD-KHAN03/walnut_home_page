@@ -7,7 +7,7 @@ import 'package:walnut_home_page/models/protocol_overview.dart';
 import 'package:walnut_home_page/models/timeline_day.dart';
 
 final mockdataArray = [
-  ProtocolData(
+  ProtocolEngineTask(
     title: 'Thyroid Reset Protocol',
     progress: 0.35,
     phase: 'Week 3 of 8',
@@ -91,7 +91,7 @@ final mockdataArray = [
       ),
     ],
   ),
-  ProtocolData(
+  ProtocolEngineTask(
     title: 'Gut Rebalance Protocol',
     progress: 0.55,
     phase: 'Week 5 of 8',
@@ -176,7 +176,7 @@ final mockdataArray = [
     ],
   ),
 
-  ProtocolData(
+  ProtocolEngineTask(
     title: 'Metabolic Reset Protocol',
     progress: 0.25,
     phase: 'Week 2 of 8',

@@ -84,7 +84,7 @@ class LabParameterCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                // color: Colors.black87,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -103,7 +103,6 @@ class LabParameterCard extends StatelessWidget {
                         'Your Value',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -123,7 +122,7 @@ class LabParameterCard extends StatelessWidget {
                         'Normal: $normalRange',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
+
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -150,7 +149,7 @@ class LabParameterCard extends StatelessWidget {
                         'Change',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
+
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -244,7 +243,7 @@ class LabResultsScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  // color: Colors.black87,
                 ),
               ),
               TextButton(

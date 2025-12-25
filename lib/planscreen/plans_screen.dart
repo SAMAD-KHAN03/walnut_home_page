@@ -29,7 +29,7 @@ class _PlansScreenState extends State<PlansScreen> {
 }
 
 class ProtocolListView extends StatelessWidget {
-  final List<ProtocolData> protocols;
+  final List<ProtocolEngineTask> protocols;
 
   const ProtocolListView({Key? key, required this.protocols}) : super(key: key);
 
@@ -46,7 +46,7 @@ class ProtocolListView extends StatelessWidget {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (BuildContext context) =>
-                    PlanDetailsScreen(mockProtocolData: protocols[index]),
+                    PlanDetailsScreen(mockProtocolEngineTask: protocols[index]),
               ),
             );
           },

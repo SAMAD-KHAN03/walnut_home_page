@@ -16,8 +16,8 @@ final Color primaryColor = const Color(0xFF00BFA5);
 
 // ignore: must_be_immutable
 class PlanDetailsScreen extends StatelessWidget {
-  ProtocolData mockProtocolData;
-  PlanDetailsScreen({Key? key, required this.mockProtocolData})
+  ProtocolEngineTask mockProtocolEngineTask;
+  PlanDetailsScreen({Key? key, required this.mockProtocolEngineTask})
     : super(key: key);
 
   @override
@@ -28,7 +28,7 @@ class PlanDetailsScreen extends StatelessWidget {
           length: 4,
           child: Column(
             children: [
-              // Header Section: Now uses protocolData
+              // Header Section: Now uses ProtocolEngineTask
               Container(
                 padding: const EdgeInsets.all(20),
                 color: Colors.white,
@@ -36,7 +36,7 @@ class PlanDetailsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      mockProtocolData.title,
+                      mockProtocolEngineTask.title,
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -44,14 +44,14 @@ class PlanDetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     LinearProgressIndicator(
-                      value: mockProtocolData.progress,
+                      value: mockProtocolEngineTask.progress,
                       backgroundColor: Colors.grey.shade200,
                       color: primaryColor,
                       minHeight: 8,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${mockProtocolData.phase} • ${mockProtocolData.phaseDetail}',
+                      '${mockProtocolEngineTask.phase} • ${mockProtocolEngineTask.phaseDetail}',
                       style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 16),
@@ -73,10 +73,10 @@ class PlanDetailsScreen extends StatelessWidget {
                 child: TabBarView(
                   children: [
                     // Pass the specific data model to each tab builder
-                    _buildOverviewTab(mockProtocolData.overview),
-                    _buildTimelineTab(mockProtocolData.timeline),
-                    _buildAdjustmentsTab(mockProtocolData.adjustments),
-                    _buildInsightsTab(mockProtocolData.insights),
+                    _buildOverviewTab(mockProtocolEngineTask.overview),
+                    _buildTimelineTab(mockProtocolEngineTask.timeline),
+                    _buildAdjustmentsTab(mockProtocolEngineTask.adjustments),
+                    _buildInsightsTab(mockProtocolEngineTask.insights),
                   ],
                 ),
               ),

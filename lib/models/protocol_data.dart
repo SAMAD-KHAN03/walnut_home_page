@@ -1,10 +1,9 @@
-
 import 'package:walnut_home_page/models/adjustment_item.dart';
 import 'package:walnut_home_page/models/insight_item.dart';
 import 'package:walnut_home_page/models/protocol_overview.dart';
 import 'package:walnut_home_page/models/timeline_day.dart';
 
-class ProtocolData {
+class ProtocolEngineTask {
   final String title;
   final double progress;
   final String phase;
@@ -14,7 +13,7 @@ class ProtocolData {
   final List<AdjustmentItem> adjustments;
   final List<InsightItem> insights;
 
-  ProtocolData({
+  ProtocolEngineTask({
     required this.title,
     required this.progress,
     required this.phase,
@@ -25,4 +24,3 @@ class ProtocolData {
     required this.insights,
   });
 }
-

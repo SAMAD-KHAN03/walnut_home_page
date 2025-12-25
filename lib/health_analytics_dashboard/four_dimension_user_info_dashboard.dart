@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:walnut_home_page/health_analytics_dashboard/health_report_analysis_card.dart';
 import 'package:walnut_home_page/health_analytics_dashboard/lifestyle_ui.dart';
@@ -14,21 +13,20 @@ class FourDimensionUserInfoDashboard extends StatefulWidget {
 
 class _FourDimensionUserInfoDashboardState
     extends State<FourDimensionUserInfoDashboard> {
-  
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Health Analytics Dashboard'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        // foregroundColor: Colors.black87,
         elevation: 0,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(  // ← Changed from Column to SingleChildScrollView
+        child: SingleChildScrollView(
+          // ← Changed from Column to SingleChildScrollView
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,  // ← Added this
+            crossAxisAlignment: CrossAxisAlignment.start, // ← Added this
             children: [
               const Padding(
                 padding: EdgeInsets.fromLTRB(8.0, 0, 8, 0),
@@ -38,13 +36,13 @@ class _FourDimensionUserInfoDashboardState
               const SizedBox(height: 20),
               const Padding(
                 padding: EdgeInsets.fromLTRB(8.0, 0, 8, 0),
-                child: Divider(thickness: 1, color: Colors.black),
+                child: Divider(thickness: 1),
               ),
               const WearablesDailyChangeIndicatorCards(),
               const SizedBox(height: 20),
               const Padding(
                 padding: EdgeInsets.fromLTRB(8.0, 0, 8, 0),
-                child: Divider(thickness: 1, color: Colors.black),
+                child: Divider(thickness: 1),
               ),
               ShowLifeStyleUI(),
               const SizedBox(height: 20),
