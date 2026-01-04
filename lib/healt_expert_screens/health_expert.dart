@@ -201,6 +201,7 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
 
   void _showFilterMenu() {
     showMenu(
+      color: Theme.of(context).colorScheme.surface,
       context: context,
       position: const RelativeRect.fromLTRB(100, 100, 0, 0),
       items: [
@@ -311,11 +312,16 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Health Experts'),
-        backgroundColor: Colors.teal,
-        foregroundColor: Colors.white,
+        elevation: 0,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -358,68 +364,75 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
                           suggestions: healthexperts,
                           suggestionState: Suggestion.expand,
                           hint: 'Search for health experts...',
+
+                          // searchStyle: TextStyle(
+                          //   color: colorScheme.onSurface,
+                          //   fontSize: 14,
+                          // ),
                           searchInputDecoration: SearchInputDecoration(
-                            prefixIcon: const Icon(Icons.search),
+                            filled: true,
+                            fillColor: colorScheme.surface,
+
+                            hintStyle: TextStyle(
+                              color: colorScheme.onSurfaceVariant.withOpacity(
+                                0.7,
+                              ),
+                            ),
+
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+
                             suffixIcon: _isSearching
                                 ? IconButton(
-                                    icon: const Icon(Icons.clear),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                    },
+                                    icon: Icon(
+                                      Icons.clear,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                    onPressed: _searchController.clear,
                                   )
                                 : null,
+
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
+                              borderSide: BorderSide(color: theme.dividerColor),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
+                              borderSide: BorderSide(color: theme.dividerColor),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Colors.teal,
+                              borderSide: BorderSide(
+                                color: colorScheme.primary,
                                 width: 2,
                               ),
                             ),
-                            filled: true,
-                            fillColor: Colors.grey[50],
                           ),
-                          maxSuggestionsInViewPort: 4,
-                          itemHeight: 60,
-                          onSuggestionTap: (suggestion) {
-                            UtilityFunctionClass.navigateToDetails(
-                              suggestion.item!,
-                              context,
-                              true,
-                            );
-                            _searchController.clear();
-                          },
                         ),
                       ),
                       const SizedBox(width: 12),
                       Container(
                         decoration: BoxDecoration(
                           color: _selectedFilter != null
-                              ? Colors.teal
-                              : Colors.grey[50],
+                              ? colorScheme.primary
+                              : colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: _selectedFilter != null
-                                ? Colors.teal
-                                : Colors.grey[300]!,
+                                ? colorScheme.primary
+                                : theme.dividerColor,
                           ),
                         ),
                         child: IconButton(
                           icon: Icon(
                             Icons.filter_list,
                             color: _selectedFilter != null
-                                ? Colors.white
-                                : Colors.grey[700],
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSurfaceVariant,
                           ),
                           onPressed: _showFilterMenu,
-                          tooltip: 'Filter by type',
                         ),
                       ),
                     ],
@@ -472,12 +485,14 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.black, width: 1),
+                              border: Border.all(
+                                color: theme.dividerColor,
+                                width: 0.8,
+                              ),
                             ),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 const SizedBox(height: 16),
                                 CircleAvatar(
@@ -485,25 +500,24 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
                                   backgroundImage: NetworkImage(
                                     expert.imageUrl,
                                   ),
-                                  backgroundColor: Colors.grey[200],
+                                  backgroundColor: colorScheme.surfaceVariant,
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
                                   expert.name,
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   UtilityFunctionClass.formatType(expert.type),
-                                  textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey.shade600,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 const Spacer(),
@@ -513,15 +527,14 @@ class _HealthExpert_Screen extends State<HealthExpert_Screen> {
                                     vertical: 8,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey.shade50,
+                                    color: colorScheme.surfaceVariant,
                                     borderRadius: const BorderRadius.only(
                                       bottomLeft: Radius.circular(12),
                                       bottomRight: Radius.circular(12),
                                     ),
                                     border: Border(
                                       top: BorderSide(
-                                        color: Colors.grey.shade300,
-                                        width: 0.8,
+                                        color: theme.dividerColor,
                                       ),
                                     ),
                                   ),

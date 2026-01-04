@@ -65,6 +65,8 @@ class LabParameterCard extends StatelessWidget {
     final isIncrease = changeData['isIncrease'] as bool;
 
     return Card(
+      // color: Colors,
+      color: Theme.of(context).cardColor,
       elevation: 1.5,
       margin: const EdgeInsets.only(right: 8),
       shape: RoundedRectangleBorder(

@@ -79,7 +79,7 @@ class _MainScaffoldState extends State<MainScaffold> {
 
           BottomNavigationBarItem(
             icon: Iconify(Healthicons.respirology_outline),
-            label: 'HealtStats',
+            label: 'HealthStats',
           ),
 
           BottomNavigationBarItem(

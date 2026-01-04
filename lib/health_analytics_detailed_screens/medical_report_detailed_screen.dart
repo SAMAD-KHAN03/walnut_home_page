@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:math' as math;
 
+import 'package:walnut_home_page/theme/themes.dart';
+
 // Main Screen Widget
 class HealthAnalysisScreen extends StatefulWidget {
   final Map<String, dynamic> reportData;
@@ -52,19 +54,10 @@ class _HealthAnalysisScreenState extends State<HealthAnalysisScreen>
             expandedHeight: 180,
             floating: false,
             pinned: true,
-            backgroundColor: const Color(0xFF6366F1),
+            backgroundColor: Colors.transparent,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF00BFA5),
-                      const Color(0xFF00BFA5).withOpacity(0.8),
-                    ],
-                  ),
-                ),
+                decoration: BoxDecoration(gradient: darkAppBarGradient),
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(20),

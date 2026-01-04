@@ -40,11 +40,11 @@ class _FourDimensionUserInfoDashboardState
               ),
               const WearablesDailyChangeIndicatorCards(),
               const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(8.0, 0, 8, 0),
-                child: Divider(thickness: 1),
-              ),
-              ShowLifeStyleUI(),
+              // const Padding(
+              //   padding: EdgeInsets.fromLTRB(8.0, 0, 8, 0),
+              //   child: Divider(thickness: 1),
+              // ),
+              // ShowLifeStyleUI(),
               const SizedBox(height: 20),
             ],
           ),

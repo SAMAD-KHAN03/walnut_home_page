@@ -46,6 +46,7 @@ dependencies:
   file_picker: ^10.3.7
   intl: ^0.20.2
   iconify_flutter: ^0.0.7
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +74,7 @@ flutter:
   assets:
     - assets/animations/Running.json
     - assets/images/heartrate.png
+    - assets/animations/health_bg.json
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
