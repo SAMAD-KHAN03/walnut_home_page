@@ -1,32 +1,36 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+
 import 'package:walnut_home_page/healt_expert_screens/customer_health_expert_details.dart';
 import 'package:walnut_home_page/healt_expert_screens/health_expert.dart';
 import 'package:walnut_home_page/provider/customer_healt_experts_provider.dart';
-
-class CustomerHealthExperts extends StatefulWidget {
+class CustomerHealthExperts extends StatelessWidget {
   const CustomerHealthExperts({super.key});
 
   @override
-  State<CustomerHealthExperts> createState() => _CustomerHealthExpertsState();
-}
-
-class _CustomerHealthExpertsState extends State<CustomerHealthExperts> {
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('CustomerHealthExperts')),
+      appBar: AppBar(
+        title: const Text('Customer Health Experts'),
+      ),
       body: Consumer<CustomerHealthExpertProvider>(
         builder: (context, value, child) {
           log("the value of length is ${value.expertslist.length}");
 
-          return Column(
-            children: [
-              ...value.expertslist.map(
-                (item) => ExpertProfileCard(expert: item),
-              ),
-            ],
+          if (value.expertslist.isEmpty) {
+            return const Center(
+              child: Text('No experts available'),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: value.expertslist.length,
+            itemBuilder: (context, index) {
+              final expert = value.expertslist[index];
+              return ExpertProfileCard(expert: expert);
+            },
           );
         },
       ),
