@@ -3,9 +3,54 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:walnut_home_page/provider/questionnaire_card_provider.dart';
+import 'package:walnut_home_page/questionnaire_section_screen.dart';
 
-class QuestionnaireSectionsOverviewScreen extends StatelessWidget {
-  const QuestionnaireSectionsOverviewScreen({super.key});
+final listofsections = [
+  "basic_profile",
+  "lifestyle_routine",
+  "current_health_challenges",
+  "previous_care_experience",
+  "primary_goals",
+  "career_life_financial_aspirations",
+  'personal_life_relationship_health',
+  "longevity_biohacking_mindset",
+  "your_commitment",
+];
+final List<String> listOfSectionTitles = [
+  "Basic Profile",
+  "Health Intake",
+  "Current Health Challenges",
+  "Previous Care Experience",
+  "Primary Goals",
+  "Career, Life & Financial Aspirations",
+  "Personal Life & Relationship Health",
+  "Longevity Biohacking Mindset",
+  "Your Commitment",
+];
+
+class QuestionnaireDashboard extends StatefulWidget {
+  const QuestionnaireDashboard({super.key});
+  @override
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    return _QuestionnaireDashboardState();
+  }
+}
+
+class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
+   bool _isloading = true;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<QuestionnaireCardsProvider>().fetchsections().then((
+        _,
+      ) {
+        _isloading = false;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +77,7 @@ class QuestionnaireSectionsOverviewScreen extends StatelessWidget {
         title: const Text('Health Questionnaire'),
         // backgroundColor: Colors.black,
       ),
-      body: Column(
+      body:_isloading?Center(child: CircularProgressIndicator(),): Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Padding(
@@ -64,7 +109,10 @@ class QuestionnaireSectionsOverviewScreen extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: CompletionBar(progress: 0.1),
+            child: CompletionBar(
+              progress: 0.1,
+              helpertext: "Just a few more steps to personalize your plan",
+            ),
           ),
           Expanded(
             child: ListView.builder(
@@ -72,7 +120,25 @@ class QuestionnaireSectionsOverviewScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 return ChangeNotifierProvider.value(
                   value: cards[index],
-                  child: const _QuestionnaireCardTile(),
+                  child: Consumer<QuestionnaireCard>(
+                    builder: (context, card, child) {
+                      return GestureDetector(
+                        onTap: () async {
+                          final result = await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(
+                              builder: (context) => QuestionnaireSectionScreen(
+                                sectionKey: listofsections[index],
+                                onComplete: () {
+                                  card.markComplete(true);
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                        child: const _QuestionnaireCardTile(),
+                      );
+                    },
+                  ),
                 );
               },
             ),
@@ -91,12 +157,11 @@ class _QuestionnaireCardTile extends StatelessWidget {
     return Selector<QuestionnaireCard, bool>(
       selector: (_, card) => card.isComplete,
       builder: (context, isComplete, _) {
-        final card = context.read<QuestionnaireCard>();
-
+        final title = context.read<QuestionnaireCard>().title;
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Container(
-            height: 70,
+            // height: 70,
             decoration: BoxDecoration(
               border: Border.all(
                 color: isComplete ? Colors.green : Colors.black,
@@ -106,31 +171,28 @@ class _QuestionnaireCardTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isComplete ? Icons.check_circle : Icons.close,
-                        color: isComplete
-                            ? Colors.green
-                            : const Color(0xFFD40E00),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          card.title,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      isComplete ? Icons.check_circle : Icons.close,
+                      color: isComplete
+                          ? Colors.green
+                          : const Color(0xFFD40E00),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const Icon(Icons.chevron_right),
-                    ],
-                  ),
+                    ),
+                    const Icon(Icons.chevron_right),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -140,6 +202,7 @@ class _QuestionnaireCardTile extends StatelessWidget {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -150,9 +213,14 @@ class _QuestionnaireCardTile extends StatelessWidget {
 }
 
 class CompletionBar extends StatelessWidget {
-  final double progress; // 0.0 → 1.0
+  final double progress;
+  final String helpertext;
 
-  const CompletionBar({super.key, required this.progress});
+  const CompletionBar({
+    super.key,
+    required this.progress,
+    required this.helpertext,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +287,7 @@ class CompletionBar extends StatelessWidget {
 
         // Helper text
         Text(
-          'Just a few more steps to personalize your plan.',
+          helpertext,
           style: TextStyle(
             fontSize: 12,
             color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
