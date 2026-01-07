@@ -25,19 +25,22 @@ class QuestionnaireCardsProvider extends ChangeNotifier {
   final List<QuestionnaireCard> _cards = [];
   Future<void> fetchsections() async {
     final url = '$baseUrl/questionnaires/templates/$template/latest';
-    final response = await http.get(Uri.parse(url));
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to load sections');
+      }
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to load sections');
-    }
+      final Map<String, dynamic> data =
+          jsonDecode(response.body) as Map<String, dynamic>;
 
-    final Map<String, dynamic> data =
-        jsonDecode(response.body) as Map<String, dynamic>;
+      final List sections = data['sections'] as List;
 
-    final List sections = data['sections'] as List;
-
-    for (final section in sections) {
-      _cards.add(QuestionnaireCard(title:  section['title']));
+      for (final section in sections) {
+        _cards.add(QuestionnaireCard(title: section['title']));
+      }
+    } catch (e) {
+      log("this is the error log :"+ e.toString());
     }
   }
 

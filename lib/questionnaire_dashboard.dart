@@ -38,7 +38,7 @@ class QuestionnaireDashboard extends StatefulWidget {
 }
 
 class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
-   bool _isloading = true;
+  bool _isloading = true;
   @override
   void initState() {
     // TODO: implement initState
@@ -47,7 +47,9 @@ class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
       await context.read<QuestionnaireCardsProvider>().fetchsections().then((
         _,
       ) {
-        _isloading = false;
+        setState(() {
+          _isloading = false;
+        });
       });
     });
   }
@@ -77,74 +79,79 @@ class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
         title: const Text('Health Questionnaire'),
         // backgroundColor: Colors.black,
       ),
-      body:_isloading?Center(child: CircularProgressIndicator(),): Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
-            child: RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans', // match display font
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  height: 1.2,
+      body: _isloading
+          ? Center(child: CircularProgressIndicator())
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
+                  child: RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans', // match display font
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                      children: const [
+                        TextSpan(
+                          text: 'Your Health\n',
+                          style: TextStyle(
+                            color: Color(0xFF1F2937), // text-light
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Journey',
+                          style: TextStyle(
+                            color: Color(0xFF7C3AED), // primary purple
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                children: const [
-                  TextSpan(
-                    text: 'Your Health\n',
-                    style: TextStyle(
-                      color: Color(0xFF1F2937), // text-light
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: CompletionBar(
+                    progress: 0.1,
+                    helpertext:
+                        "Just a few more steps to personalize your plan",
                   ),
-                  TextSpan(
-                    text: 'Journey',
-                    style: TextStyle(
-                      color: Color(0xFF7C3AED), // primary purple
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: CompletionBar(
-              progress: 0.1,
-              helpertext: "Just a few more steps to personalize your plan",
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: cards.length,
-              itemBuilder: (context, index) {
-                return ChangeNotifierProvider.value(
-                  value: cards[index],
-                  child: Consumer<QuestionnaireCard>(
-                    builder: (context, card, child) {
-                      return GestureDetector(
-                        onTap: () async {
-                          final result = await Navigator.of(context).push<bool>(
-                            MaterialPageRoute(
-                              builder: (context) => QuestionnaireSectionScreen(
-                                sectionKey: listofsections[index],
-                                onComplete: () {
-                                  card.markComplete(true);
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                        child: const _QuestionnaireCardTile(),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: cards.length,
+                    itemBuilder: (context, index) {
+                      return ChangeNotifierProvider.value(
+                        value: cards[index],
+                        child: Consumer<QuestionnaireCard>(
+                          builder: (context, card, child) {
+                            return GestureDetector(
+                              onTap: () async {
+                                final result = await Navigator.of(context)
+                                    .push<bool>(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            QuestionnaireSectionScreen(
+                                              sectionKey: listofsections[index],
+                                              onComplete: () {
+                                                card.markComplete(true);
+                                              },
+                                            ),
+                                      ),
+                                    );
+                              },
+                              child: const _QuestionnaireCardTile(),
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
-                );
-              },
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }
