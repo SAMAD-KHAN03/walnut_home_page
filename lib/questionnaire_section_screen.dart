@@ -1,4 +1,5 @@
 // questionnaire_section_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -8,12 +9,14 @@ import 'package:walnut_home_page/provider/questionnaire_section_provider.dart';
 
 class QuestionnaireSectionScreen extends StatefulWidget {
   final String sectionKey;
+  final bool alreadyfilled;
   final VoidCallback? onComplete;
 
   const QuestionnaireSectionScreen({
     Key? key,
     required this.sectionKey,
     this.onComplete,
+    required this.alreadyfilled,
   }) : super(key: key);
 
   @override
@@ -373,7 +376,9 @@ class _QuestionnaireSectionScreenState
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    isLastQuestion ? 'Complete' : 'Continue',
+                    widget.alreadyfilled
+                        ? (isLastQuestion ? 'End' : 'Next')
+                        : (isLastQuestion ? 'Complete' : 'Continue'),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -408,19 +413,23 @@ class _QuestionnaireSectionScreenState
         ),
       );
 
-      await provider.saveSection(widget.sectionKey);
+      if (!widget.alreadyfilled) {
+        await provider.saveSection(widget.sectionKey);
+      }
 
       // Close loading
       if (mounted) Navigator.pop(context);
 
       // Show success and navigate back
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Section completed successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (!widget.alreadyfilled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Section completed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
 
         // Call the onComplete callback before popping
         widget.onComplete?.call();

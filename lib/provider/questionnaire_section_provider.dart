@@ -13,18 +13,9 @@ class _Answer {
 }
 
 class QuestionnaireSectionProvider extends ChangeNotifier {
-
-
-  // final String baseUrl=baseUrl;
-  // final String template;
-  // final int version;
-  // final String userId;
-
   QuestionnareSection? _section;
   bool _loading = false;
-
   final Map<String, _Answer> _answers = {};
-
 
   QuestionnareSection? get section => _section;
   bool get isLoading => _loading;
@@ -32,43 +23,168 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
   int get totalQuestions => _section?.questions.length ?? 0;
   int get answeredCount => _answers.length;
 
-  // dynamic answerFor(String questionKey) => _answers[questionKey];
-Future<void> fetchSection(String sectionKey) async {
-  _loading = true;
-  notifyListeners();
-
-  final url =
-      '$baseUrl/questionnaires/templates/$template/versions/$version/sections/$sectionKey';
-
-  final response = await http.get(Uri.parse(url));
-
-  if (response.statusCode != 200) {
-    _loading = false;
+  /// Fetches both section questions and prefill data in parallel
+  Future<void> fetchSection(String sectionKey) async {
+    _loading = true;
     notifyListeners();
-    throw Exception('Failed to load questionnaire section');
+
+    try {
+      // Fetch questions and prefill data concurrently
+      final results = await Future.wait([
+        _fetchQuestions(sectionKey),
+        _fetchPrefillData(sectionKey),
+      ]);
+
+      final questionsResponse = results[0];
+      final prefillResponse = results[1];
+
+      // Parse questions
+      if (questionsResponse.statusCode != 200) {
+        throw Exception('Failed to load questionnaire section');
+      }
+
+      _section = QuestionnareSection.fromJson(
+        json.decode(questionsResponse.body),
+      );
+
+      // Clear previous answers for this section
+      _answers.removeWhere((key, _) => key.startsWith('$sectionKey.'));
+
+      // Populate prefill data if available
+      if (prefillResponse.statusCode == 200) {
+        final prefillData = json.decode(prefillResponse.body);
+        _populatePrefillData(prefillData, sectionKey);
+      } else if (prefillResponse.statusCode != 404) {
+        // Log warning for non-404 errors (404 is expected for new sections)
+        log('Prefill data fetch failed with status ${prefillResponse.statusCode}');
+      }
+    } catch (e) {
+      log('Error fetching section: $e');
+      rethrow;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
   }
 
-  _section = QuestionnareSection.fromJson(json.decode(response.body));
+  /// Fetches the section questions schema
+  Future<http.Response> _fetchQuestions(String sectionKey) async {
+    final url =
+        '$baseUrl/questionnaires/templates/$template/versions/$version/sections/$sectionKey';
+    return await http.get(Uri.parse(url));
+  }
 
-  // Optional: Clear answers for this section only
-  // This prevents stale data if user navigates back
-  _answers.removeWhere((key, value) => key.startsWith('$sectionKey.'));
+  /// Fetches the prefill data for the section
+  Future<http.Response> _fetchPrefillData(String sectionKey) async {
+    final url =
+        '$baseUrl/questionnaires/$template/sections/$sectionKey/response?userId=$userId';
+    return await http.get(Uri.parse(url));
+  }
 
-  _loading = false;
-  notifyListeners();
-}
+  /// Populates answers from prefill data
+  void _populatePrefillData(
+    Map<String, dynamic> responseData,
+    String sectionKey,
+  ) {
+    try {
+      final prefillMap = responseData['prefill'] as Map<String, dynamic>?;
+      if (prefillMap == null || prefillMap.isEmpty) return;
 
-  // Update handlers to include question type
+      prefillMap.forEach((questionKey, answerData) {
+        if (answerData == null) return;
+
+        final answerMap = answerData as Map<String, dynamic>;
+
+        // Find the question to determine its type
+        final question = _section?.questions.firstWhere(
+          (q) => q.questionKey == questionKey,
+          orElse: () => throw Exception('Question not found: $questionKey'),
+        );
+
+        if (question == null) return;
+
+        final questionType = question.type.toUpperCase();
+
+        // Populate answer based on question type
+        if (questionType.contains('MULTI')) {
+          _populateMultiChoiceAnswer(questionKey, answerMap, question.type);
+        } else if (questionType.contains('SINGLE')) {
+          _populateSingleChoiceAnswer(questionKey, answerMap, question.type);
+        } else if (questionType == 'NUMBER') {
+          _populateNumericAnswer(questionKey, answerMap, question.type);
+        } else {
+          _populateTextAnswer(questionKey, answerMap, question.type);
+        }
+      });
+
+      log('Prefill data loaded: ${_answers.length} answers populated');
+    } catch (e) {
+      log('Error populating prefill data: $e');
+    }
+  }
+
+  void _populateMultiChoiceAnswer(
+    String questionKey,
+    Map<String, dynamic> answerMap,
+    String questionType,
+  ) {
+    final selectedKeys = answerMap['selectedOptionKeys'] as List?;
+    if (selectedKeys != null && selectedKeys.isNotEmpty) {
+      final optionSet = selectedKeys.map((e) => e.toString()).toSet();
+      _answers[questionKey] = _Answer(optionSet, questionType);
+    }
+  }
+
+  void _populateSingleChoiceAnswer(
+    String questionKey,
+    Map<String, dynamic> answerMap,
+    String questionType,
+  ) {
+    final selectedKey = answerMap['selectedOptionKey'] as String?;
+    if (selectedKey != null && selectedKey.isNotEmpty) {
+      _answers[questionKey] = _Answer(selectedKey, questionType);
+    }
+    // Note: otherText is available in answerMap['otherText'] if needed
+  }
+
+  void _populateNumericAnswer(
+    String questionKey,
+    Map<String, dynamic> answerMap,
+    String questionType,
+  ) {
+    final value = answerMap['value'];
+    if (value != null) {
+      // Store as string for consistency with text input
+      _answers[questionKey] = _Answer(value.toString(), questionType);
+    }
+  }
+
+  void _populateTextAnswer(
+    String questionKey,
+    Map<String, dynamic> answerMap,
+    String questionType,
+  ) {
+    final value = answerMap['value'];
+    if (value != null) {
+      final stringValue = value.toString();
+      if (stringValue.isNotEmpty) {
+        _answers[questionKey] = _Answer(stringValue, questionType);
+      }
+    }
+  }
+
+  // Update handlers
   void updateSingleChoice(String questionKey, String optionKey) {
     final fullQuestionKey = _getFullQuestionKey(questionKey);
-    _answers[fullQuestionKey] = _Answer(optionKey, 'single_correct');
+    final question = _findQuestion(questionKey);
+    _answers[fullQuestionKey] = _Answer(optionKey, question?.type ?? 'SINGLE_CHOICE');
     notifyListeners();
   }
 
   void updateMultiChoice(String questionKey, String optionKey, bool selected) {
     final fullQuestionKey = _getFullQuestionKey(questionKey);
-    final current =
-        _answers[fullQuestionKey]?.value as Set<String>? ?? <String>{};
+    final question = _findQuestion(questionKey);
+    final current = _answers[fullQuestionKey]?.value as Set<String>? ?? <String>{};
 
     final updated = Set<String>.from(current);
     selected ? updated.add(optionKey) : updated.remove(optionKey);
@@ -76,27 +192,31 @@ Future<void> fetchSection(String sectionKey) async {
     if (updated.isEmpty) {
       _answers.remove(fullQuestionKey);
     } else {
-      _answers[fullQuestionKey] = _Answer(updated, 'multi_correct');
+      _answers[fullQuestionKey] = _Answer(updated, question?.type ?? 'MULTI_CHOICE');
     }
     notifyListeners();
   }
 
   void updateTextAnswer(String questionKey, String value) {
     final fullQuestionKey = _getFullQuestionKey(questionKey);
-    final question = _section?.questions.firstWhere(
-      (q) => q.questionKey == questionKey,
-      orElse: () => _section!.questions.first,
-    );
+    final question = _findQuestion(questionKey);
 
     if (value.trim().isEmpty) {
       _answers.remove(fullQuestionKey);
     } else {
       _answers[fullQuestionKey] = _Answer(
         value.trim(),
-        question?.type ?? 'short_text',
+        question?.type ?? 'SHORT_TEXT',
       );
     }
     notifyListeners();
+  }
+
+  Question? _findQuestion(String questionKey) {
+    return _section?.questions.firstWhere(
+      (q) => q.questionKey == questionKey,
+      orElse: () => _section!.questions.first,
+    );
   }
 
   String _getFullQuestionKey(String questionKey) {
@@ -112,52 +232,52 @@ Future<void> fetchSection(String sectionKey) async {
     return _answers[fullQuestionKey]?.value;
   }
 
-
   Map<String, dynamic> _buildRequestBody(String sectionKey) {
     final List<Map<String, dynamic>> answersList = [];
 
-    // Only include answers for the current section
     _answers.forEach((questionKey, answerData) {
-      // Skip answers from other sections
-      if (!questionKey.startsWith('$sectionKey.')) {
-        return;
-      }
+      // Only include answers for the current section
+      if (!questionKey.startsWith('$sectionKey.')) return;
 
       final value = answerData.value;
-      final type = answerData.questionType.toLowerCase();
+      final type = answerData.questionType.toUpperCase();
       Map<String, dynamic> answerObject;
 
-      if (type.contains('multi')) {
-        // Multi-choice
+      if (type.contains('MULTI')) {
         answerObject = {
           "selectedOptionKeys": (value as Set<String>).toList(),
           "otherText": null,
         };
-      } else if (type.contains('single')) {
-        // Single-choice
-        answerObject = {"selectedOptionKey": value, "otherText": null};
-      } else if (type.contains('numeric')) {
-        // Numeric - convert string to number
+      } else if (type.contains('SINGLE')) {
+        answerObject = {
+          "selectedOptionKey": value,
+          "otherText": null,
+        };
+      } else if (type == 'NUMBER') {
         final numValue = num.tryParse(value.toString());
         answerObject = {"value": numValue ?? value};
       } else {
-        // Short text
         answerObject = {"value": value};
       }
 
-      answersList.add({"questionKey": questionKey, "answer": answerObject});
+      answersList.add({
+        "questionKey": questionKey,
+        "answer": answerObject,
+      });
     });
 
-    return {"answers": answersList, "markCompleted": true};
+    return {
+      "answers": answersList,
+      "markCompleted": true,
+    };
   }
 
   Future<void> saveSection(String sectionKey) async {
     final url =
         '$baseUrl/questionnaires/$template/sections/$sectionKey/response?userId=$userId';
 
-    final body = _buildRequestBody(sectionKey); // Pass sectionKey to filter
+    final body = _buildRequestBody(sectionKey);
 
-    // Pretty print for easier debugging
     final encoder = JsonEncoder.withIndent('  ');
     log("REQUEST BODY:\n${encoder.convert(body)}");
 
@@ -175,5 +295,18 @@ Future<void> fetchSection(String sectionKey) async {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to save section: ${response.body}');
     }
+  }
+
+  /// Clears all data when provider is disposed or reset
+  void reset() {
+    _section = null;
+    _answers.clear();
+    _loading = false;
+  }
+
+  @override
+  void dispose() {
+    _answers.clear();
+    super.dispose();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
@@ -60,6 +62,9 @@ class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
         .select<QuestionnaireCardsProvider, List<QuestionnaireCard>>(
           (p) => p.cards,
         );
+    final progress = context.select<QuestionnaireCardsProvider, double>(
+      (p) => p.progress,
+    );
 
     return Scaffold(
       // backgroundColor: const Color(0xFF121212),
@@ -114,7 +119,7 @@ class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: CompletionBar(
-                    progress: 0.1,
+                    progress: progress,
                     helpertext:
                         "Just a few more steps to personalize your plan",
                   ),
@@ -138,6 +143,7 @@ class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
                                               onComplete: () {
                                                 card.markComplete(true);
                                               },
+                                              alreadyfilled: card.isComplete,
                                             ),
                                       ),
                                     );
