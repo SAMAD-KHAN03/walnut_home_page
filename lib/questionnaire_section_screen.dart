@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:provider/provider.dart';
 import 'package:walnut_home_page/models/questionnare_section.dart';
+
 import 'package:walnut_home_page/provider/questionnaire_section_provider.dart';
 
 class QuestionnaireSectionScreen extends StatefulWidget {
@@ -27,7 +28,6 @@ class QuestionnaireSectionScreen extends StatefulWidget {
 class _QuestionnaireSectionScreenState
     extends State<QuestionnaireSectionScreen> {
   int _currentQuestionIndex = 0;
-
   @override
   void initState() {
     super.initState();
@@ -413,7 +413,8 @@ class _QuestionnaireSectionScreenState
         ),
       );
 
-      if (!widget.alreadyfilled) {
+      // Only save if there are changes (no prefill OR user modified prefilled data)
+      if (provider.hasChanges) {
         await provider.saveSection(widget.sectionKey);
       }
 
@@ -422,7 +423,7 @@ class _QuestionnaireSectionScreenState
 
       // Show success and navigate back
       if (mounted) {
-        if (!widget.alreadyfilled) {
+        if (provider.hasChanges) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Section completed successfully!'),
@@ -434,7 +435,7 @@ class _QuestionnaireSectionScreenState
         // Call the onComplete callback before popping
         widget.onComplete?.call();
 
-        Navigator.pop(context, true); // Return true to indicate completion
+        Navigator.pop(context, true);
       }
     } catch (e) {
       // Close loading
@@ -486,7 +487,9 @@ class _SingleChoiceOptions extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: GestureDetector(
-            onTap: () => onSelect(option.optionKey),
+            onTap: () {
+              onSelect(option.optionKey);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(

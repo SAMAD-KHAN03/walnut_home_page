@@ -10,18 +10,59 @@ class _Answer {
   final String questionType;
 
   _Answer(this.value, this.questionType);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! _Answer) return false;
+    
+    // Deep comparison for Set values
+    if (value is Set && other.value is Set) {
+      final thisSet = value as Set;
+      final otherSet = other.value as Set;
+      if (thisSet.length != otherSet.length) return false;
+      return thisSet.every((e) => otherSet.contains(e));
+    }
+    
+    return value == other.value && questionType == other.questionType;
+  }
+
+  @override
+  int get hashCode => Object.hash(value, questionType);
 }
 
 class QuestionnaireSectionProvider extends ChangeNotifier {
   QuestionnareSection? _section;
   bool _loading = false;
   final Map<String, _Answer> _answers = {};
+  final Map<String, _Answer> _originalAnswers = {}; // Track original prefilled data
+  bool _hadPrefillData = false;
 
   QuestionnareSection? get section => _section;
   bool get isLoading => _loading;
 
   int get totalQuestions => _section?.questions.length ?? 0;
   int get answeredCount => _answers.length;
+
+  /// Returns true if user has made changes to prefilled data or if there was no prefill
+  bool get hasChanges {
+    if (!_hadPrefillData) {
+      // No prefill data - any answers mean changes
+      return _answers.isNotEmpty;
+    }
+
+    // Compare current answers with original prefilled answers
+    if (_answers.length != _originalAnswers.length) return true;
+
+    for (final entry in _answers.entries) {
+      final original = _originalAnswers[entry.key];
+      if (original == null || original != entry.value) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   /// Fetches both section questions and prefill data in parallel
   Future<void> fetchSection(String sectionKey) async {
@@ -47,15 +88,16 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
         json.decode(questionsResponse.body),
       );
 
-      // Clear previous answers for this section
+      // Clear previous data for this section
       _answers.removeWhere((key, _) => key.startsWith('$sectionKey.'));
+      _originalAnswers.clear();
+      _hadPrefillData = false;
 
       // Populate prefill data if available
       if (prefillResponse.statusCode == 200) {
         final prefillData = json.decode(prefillResponse.body);
         _populatePrefillData(prefillData, sectionKey);
       } else if (prefillResponse.statusCode != 404) {
-        // Log warning for non-404 errors (404 is expected for new sections)
         log('Prefill data fetch failed with status ${prefillResponse.statusCode}');
       }
     } catch (e) {
@@ -67,21 +109,18 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
     }
   }
 
-  /// Fetches the section questions schema
   Future<http.Response> _fetchQuestions(String sectionKey) async {
     final url =
         '$baseUrl/questionnaires/templates/$template/versions/$version/sections/$sectionKey';
     return await http.get(Uri.parse(url));
   }
 
-  /// Fetches the prefill data for the section
   Future<http.Response> _fetchPrefillData(String sectionKey) async {
     final url =
         '$baseUrl/questionnaires/$template/sections/$sectionKey/response?userId=$userId';
     return await http.get(Uri.parse(url));
   }
 
-  /// Populates answers from prefill data
   void _populatePrefillData(
     Map<String, dynamic> responseData,
     String sectionKey,
@@ -90,12 +129,13 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
       final prefillMap = responseData['prefill'] as Map<String, dynamic>?;
       if (prefillMap == null || prefillMap.isEmpty) return;
 
+      _hadPrefillData = true;
+
       prefillMap.forEach((questionKey, answerData) {
         if (answerData == null) return;
 
         final answerMap = answerData as Map<String, dynamic>;
 
-        // Find the question to determine its type
         final question = _section?.questions.firstWhere(
           (q) => q.questionKey == questionKey,
           orElse: () => throw Exception('Question not found: $questionKey'),
@@ -105,7 +145,6 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
 
         final questionType = question.type.toUpperCase();
 
-        // Populate answer based on question type
         if (questionType.contains('MULTI')) {
           _populateMultiChoiceAnswer(questionKey, answerMap, question.type);
         } else if (questionType.contains('SINGLE')) {
@@ -116,6 +155,20 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
           _populateTextAnswer(questionKey, answerMap, question.type);
         }
       });
+
+      // Store a deep copy of prefilled answers as original
+      _originalAnswers.addAll(
+        _answers.map((key, value) {
+          // Deep copy for Set values
+          if (value.value is Set) {
+            return MapEntry(
+              key,
+              _Answer(Set<String>.from(value.value as Set), value.questionType),
+            );
+          }
+          return MapEntry(key, _Answer(value.value, value.questionType));
+        }),
+      );
 
       log('Prefill data loaded: ${_answers.length} answers populated');
     } catch (e) {
@@ -144,7 +197,6 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
     if (selectedKey != null && selectedKey.isNotEmpty) {
       _answers[questionKey] = _Answer(selectedKey, questionType);
     }
-    // Note: otherText is available in answerMap['otherText'] if needed
   }
 
   void _populateNumericAnswer(
@@ -154,7 +206,6 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
   ) {
     final value = answerMap['value'];
     if (value != null) {
-      // Store as string for consistency with text input
       _answers[questionKey] = _Answer(value.toString(), questionType);
     }
   }
@@ -173,7 +224,6 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
     }
   }
 
-  // Update handlers
   void updateSingleChoice(String questionKey, String optionKey) {
     final fullQuestionKey = _getFullQuestionKey(questionKey);
     final question = _findQuestion(questionKey);
@@ -236,7 +286,6 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
     final List<Map<String, dynamic>> answersList = [];
 
     _answers.forEach((questionKey, answerData) {
-      // Only include answers for the current section
       if (!questionKey.startsWith('$sectionKey.')) return;
 
       final value = answerData.value;
@@ -297,16 +346,18 @@ class QuestionnaireSectionProvider extends ChangeNotifier {
     }
   }
 
-  /// Clears all data when provider is disposed or reset
   void reset() {
     _section = null;
     _answers.clear();
+    _originalAnswers.clear();
+    _hadPrefillData = false;
     _loading = false;
   }
 
   @override
   void dispose() {
     _answers.clear();
+    _originalAnswers.clear();
     super.dispose();
   }
 }
