@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:walnut_home_page/data/protocol_engine_dummy_data.dart';
 import 'package:walnut_home_page/models/protocol_engine.dart';
-import 'package:walnut_home_page/protocol_engine/protocol_progress_screen.dart';
 import 'package:walnut_home_page/protocol_engine/protocol_weekly_roadmap_screen.dart';
 
 class ProtocolEngineDashboard extends StatelessWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:walnut_home_page/amara_ai/chat_screen.dart';
-import 'package:walnut_home_page/dashboard_screen.dart';
+
 import 'package:walnut_home_page/healt_expert_screens/health_expert.dart';
 
 // Import your ChatScreen file here

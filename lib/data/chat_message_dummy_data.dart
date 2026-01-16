@@ -1,5 +1,5 @@
 import 'package:walnut_home_page/amara_ai/chat_screen.dart';
-import 'package:walnut_home_page/dashboard_screen.dart';
+
 
 final List<ChatMessage> initialMessages = [
       ChatMessage(

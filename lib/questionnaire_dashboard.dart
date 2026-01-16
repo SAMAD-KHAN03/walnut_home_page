@@ -1,4 +1,4 @@
-import 'dart:ffi';
+
 
 import 'package:flutter/material.dart';
 
@@ -17,6 +17,7 @@ final listofsections = [
   'personal_life_relationship_health',
   "longevity_biohacking_mindset",
   "your_commitment",
+  "additional_notes_optional",
 ];
 final List<String> listOfSectionTitles = [
   "Basic Profile",
@@ -28,6 +29,7 @@ final List<String> listOfSectionTitles = [
   "Personal Life & Relationship Health",
   "Longevity Biohacking Mindset",
   "Your Commitment",
+  "Additional Notes(Optional)",
 ];
 
 class QuestionnaireDashboard extends StatefulWidget {
