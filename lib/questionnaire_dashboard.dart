@@ -1,10 +1,9 @@
-
-
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 
 import 'package:walnut_home_page/provider/questionnaire_card_provider.dart';
+import 'package:walnut_home_page/provider/questionnaire_progress_provider.dart';
 import 'package:walnut_home_page/questionnaire_section_screen.dart';
 
 final listofsections = [
@@ -48,7 +47,7 @@ class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
     // TODO: implement initState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<QuestionnaireCardsProvider>().fetchsections().then((
+      await context.read<QuestionnaireCardsProvider>().fetchSections().then((
         _,
       ) {
         setState(() {
@@ -64,10 +63,9 @@ class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
         .select<QuestionnaireCardsProvider, List<QuestionnaireCard>>(
           (p) => p.cards,
         );
-    final progress = context.select<QuestionnaireCardsProvider, double>(
-      (p) => p.progress,
-    );
-
+   final progress = context.select<QuestionnaireCardsProvider, double>(
+  (p) => p.progress,
+);
     return Scaffold(
       // backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
@@ -143,7 +141,7 @@ class _QuestionnaireDashboardState extends State<QuestionnaireDashboard> {
                                             QuestionnaireSectionScreen(
                                               sectionKey: listofsections[index],
                                               onComplete: () {
-                                                card.markComplete(true);
+                                                card.markComplete();
                                               },
                                               alreadyfilled: card.isComplete,
                                             ),

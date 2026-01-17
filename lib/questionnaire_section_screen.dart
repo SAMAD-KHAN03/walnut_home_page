@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:provider/provider.dart';
 import 'package:walnut_home_page/models/questionnare_section.dart';
+import 'package:walnut_home_page/provider/questionnaire_card_provider.dart';
 
 import 'package:walnut_home_page/provider/questionnaire_section_provider.dart';
 
@@ -41,7 +42,7 @@ class _QuestionnaireSectionScreenState
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<QuestionnaireSectionProvider>();
-
+    final card_provider = context.read<QuestionnaireCardsProvider>();
     if (provider.isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFFF6F6F8),
@@ -140,7 +141,7 @@ class _QuestionnaireSectionScreenState
       ),
 
       // Bottom action button
-      bottomNavigationBar: _buildBottomBar(provider, section, canProceed),
+      bottomNavigationBar: _buildBottomBar(provider, section, canProceed,card_provider),
     );
   }
 
@@ -307,7 +308,9 @@ class _QuestionnaireSectionScreenState
     QuestionnaireSectionProvider provider,
     QuestionnareSection section,
     bool canProceed,
+    QuestionnaireCardsProvider card_provider,
   ) {
+
     final isLastQuestion =
         _currentQuestionIndex >= section.questions.length - 1;
 
@@ -354,7 +357,7 @@ class _QuestionnaireSectionScreenState
                   ? () async {
                       if (isLastQuestion) {
                         // Save section
-                        await _saveSection(provider, section);
+                        await _saveSection(provider, section,card_provider,_currentQuestionIndex);
                       } else {
                         setState(() {
                           _currentQuestionIndex++;
@@ -402,6 +405,8 @@ class _QuestionnaireSectionScreenState
   Future<void> _saveSection(
     QuestionnaireSectionProvider provider,
     QuestionnareSection section,
+    QuestionnaireCardsProvider card_provider, 
+    int index,
   ) async {
     try {
       // Show loading
@@ -415,6 +420,8 @@ class _QuestionnaireSectionScreenState
 
       // Only save if there are changes (no prefill OR user modified prefilled data)
       if (provider.hasChanges) {
+        context.read<QuestionnaireCardsProvider>()
+    .completeSection(index);
         await provider.saveSection(widget.sectionKey);
       }
 
